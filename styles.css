@@ -111,6 +111,7 @@ body {
 .joystick {
     background: grey;
     border-radius: 50%;
+    -webkit-user-select: none;
     user-select: none;
     cursor: pointer;
     height: 13vw;

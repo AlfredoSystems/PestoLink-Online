@@ -15,6 +15,7 @@ let hackSpacerElement = document.getElementById("hack-spacer");
 let toggleMobile = document.getElementById('toggle-mobile-layout');
 let toggleKeyboardWASD = document.getElementById('toggle-keyboard-style');
 let toggleInfo = document.getElementById('toggle-info');
+let lastKeyPressed = 1;
 
 // --------------------------- state management ------------------------------------ //
 
@@ -98,6 +99,10 @@ function updateSlider(sliderElement, toggleState){
 // ----------------------------------------- main --------------------------------------- //
 
 function renderLoop() {
+    var axisValueElements = document.querySelectorAll('[id^="axisValue"]');
+    var barElements = document.querySelectorAll('[id^="bar"]');
+    var buttonElements = document.querySelectorAll('[id^="buttonDesktop"]');
+    // console.log(document.lastKeyPressed);
     //bytes 0: packet version
     //bytes 1-4: axes
     //bytes 5-6: button states
@@ -115,6 +120,33 @@ function renderLoop() {
     rawPacket[6] = buttonCallback().byte1
 
     keyboardArray = keyboardAgent.getKeyboardArray()
+    var keys = {
+        //Change these to change which keys are bound to which button.
+        'axis0+':22,
+        'axis0-':19,
+        'axis1+':37,
+        'axis1-':41,
+        'axis2+':30,
+        'axis2-':28,
+        'axis3+':29,
+        'axis3-':27,
+        'button0':35,
+        'button1':23,
+        'button2':36,
+        'button3':38,
+        'button4':43,
+        'button5':39,
+        'button6':33,
+        'button7':34,
+        'button8':44,
+        'button9':42,
+        'button10':21,
+        'button11':40,
+        'button12':20,
+        'button13':32,
+        'button14':31,
+        'button15':4
+    }
 
     for (let i = 0; i < 12; i++) {
         if (keyboardArray.length > i) {
@@ -128,20 +160,65 @@ function renderLoop() {
 
     if (localStorage.getItem(toggleKeyboardWASD.id) === 'true') {
         for (let key of keyboardArray) {
-            if (key === 19 || key === 28) rawPacket[1] = clampUint8(rawPacket[2] - 128);
-            if (key === 22 || key === 30) rawPacket[1] = clampUint8(rawPacket[2] + 128);
-            if (key === 27 || key === 41) rawPacket[2] = clampUint8(rawPacket[1] - 128);
-            if (key === 29 || key === 37) rawPacket[2] = clampUint8(rawPacket[1] + 128);
-            if (key === 44 || key === 20) rawPacket[5] |= (1 << 0)
-            if (key === 42 || key === 32) rawPacket[5] |= (1 << 1)
-            if (key === 21 || key === 31) rawPacket[5] |= (1 << 2)
-            if (key === 40 || key === 4) rawPacket[5] |= (1 << 3)
+            // console.log(this);
+            if (key === keys['axis0-']) rawPacket[1] = clampUint8(rawPacket[1] - 128); //A
+            if (key === keys['axis0+']) rawPacket[1] = clampUint8(rawPacket[1] + 128); //D
+            if (key === keys['axis1-']) rawPacket[2] = clampUint8(rawPacket[2] - 128); //W
+            if (key === keys['axis1+']) rawPacket[2] = clampUint8(rawPacket[2] + 128); //S
+            if(key===keys['axis2-']) rawPacket[3] = clampUint8(rawPacket[3] - 128); //J
+            if(key===keys['axis2+']) rawPacket[3] = clampUint8(rawPacket[3] + 128); //L
+            if(key===keys['axis3-']) rawPacket[4] = clampUint8(rawPacket[4] - 128); //I
+            if(key===keys['axis3+']) rawPacket[4] = clampUint8(rawPacket[4] + 128); //K
+            for(let i=0; i<8; i++){
+                if(key===keys['button'+i]) rawPacket[5] |= (1 << i)
+            }
+            for(let i=8; i<16; i++){
+                if(key===keys['button'+i]) rawPacket[6] |= (1 << i-8)
+            }
         }
     }
 
-    if (!document.hasFocus()) { rawPacket.fill(0, 0, 20); }
+    if (!document.hasFocus()) { rawPacket.fill(0, 7, 20); }
 
-    //console.log(rawPacket)
+    if(localStorage.getItem(toggleKeyboardWASD.id) === 'true'){
+        for(let i=0; i<4; i++){
+            let axisValGamepad = rawPacket[i+1];
+            axisValueElements[i].textContent = axisValGamepad
+            let percentage = Math.round(axisValGamepad*100/255);
+            barElements[i].style.background = `linear-gradient(to right, var(--alf-green) ${percentage}%, grey 0%)`;
+        }
+        buttonElements.forEach((button) => button.style.background='grey')
+        if(rawPacket[5]!=0 || rawPacket[6]!=0){
+            for(let i=7; rawPacket[i]!=0; i++){
+                if(Object.values(keys).slice(8).includes(rawPacket[i])){
+                    buttonElements[Object.values(keys).slice(8).indexOf(rawPacket[i])].style.background='var(--alf-green)';
+                }
+                // if(rawPacket[i]<=14){
+                //     buttonElements[rawPacket[i]-5].style.background = 'var(--alf-green)';
+                // }
+                // else if(rawPacket[i]===35){
+                //     buttonElements[10].style.background = 'var(--alf-green)';
+                // }
+                // else if(rawPacket[i]===23){
+                //     buttonElements[11].style.background = 'var(--alf-green)';
+                // }
+                // else if(rawPacket[i]===36){
+                //     buttonElements[12].style.background = 'var(--alf-green)';
+                // }
+                // else if(rawPacket[i]===38){
+                //     buttonElements[13].style.background = 'var(--alf-green)';
+                // }
+                // else if(rawPacket[i]===43){
+                //     buttonElements[14].style.background = 'var(--alf-green)';
+                // }
+                // else if(rawPacket[i]===39){
+                //     buttonElements[15].style.background = 'var(--alf-green)';
+                // }
+            }
+        }
+    }
+
+    // console.log(rawPacket)
     bleAgent.attemptSend(rawPacket);
 }
 
@@ -474,16 +551,16 @@ function createGamepadAgent() {
 // -------------------------------------------- keyboard --------------------------------------- //
 
 function createKeyboardAgent() {
-
     document.addEventListener('keydown', handleKeyboardInput);
     document.addEventListener('keyup', handleKeyboardInput);
 
     function handleKeyboardInput(event) {
         if (event.repeat != true) {
             keyEventQueue.push(event);
+            this.lastKeyPressed=event.code;
         }
     }
-
+    // this.console.log(this);
     var keyEventQueue = [];
     var keyboardState = [];
 
