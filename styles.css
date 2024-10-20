@@ -81,7 +81,9 @@ body {
 #mobile-button,
 #mobile-joystick,
 #desktop-axis,
-#desktop-button {
+#desktop-button,
+#desktop-axis1,
+#desktop-button1 {
     width: 30vw;
     height: 30vw;
     display: none;
@@ -111,6 +113,7 @@ body {
 .joystick {
     background: grey;
     border-radius: 50%;
+    -webkit-user-select: none;
     user-select: none;
     -webkit-user-select: none;
     cursor: pointer;
@@ -120,7 +123,7 @@ body {
 
 #interface {
     width: 20vw;
-    height: 30vw;
+    height: 35vw;
     display: grid;
     grid-template-rows: 1fr 1fr 2fr;
     grid-template-columns: 1fr 1fr;
@@ -179,7 +182,8 @@ body {
     align-items: center;
 }
 
-#desktop-button {
+#desktop-button,
+#desktop-button1{
     display: grid;
     padding: 1vw;
     grid-gap: 0.5vw;
@@ -187,14 +191,16 @@ body {
     grid-template-columns: 1fr 1fr 1fr 1fr;
 }
 
-#desktop-button button {
+#desktop-button button,
+#desktop-button1 button {
     font-size: 2vw;
     background: grey;
     border: none;
     border-radius: 1vw;
 }
 
-#desktop-axis {
+#desktop-axis,
+#desktop-axis1 {
     display: grid;
     padding: 1vw;
     grid-row-gap: 1vw;
@@ -203,7 +209,8 @@ body {
     grid-template-columns: 1fr 1fr 1fr;
 }
 
-#desktop-axis div {
+#desktop-axis,
+#desktop-axis1 div {
     font-size: 2vw;
     border: none;
 }
