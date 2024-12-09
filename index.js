@@ -282,9 +282,10 @@ function createBleAgent() {
         for (let i = 0; i < Math.min(8, value.byteLength); i++) {
             asciiString += String.fromCharCode(value.getUint8(i));
         }
-        //console.log('Received ASCII string:', asciiString);
-        terminal.innerHTML = terminal.innerHTML + "\n" + asciiString;
-
+        console.log('Received ASCII string:', asciiString);
+        console.log(terminal.innerHTML);
+        terminal.innerHTML = terminal.innerHTML + "\n>" + asciiString;
+        console.log(terminal.innerHTML);
     }
 
     async function disconnectBLE() {
