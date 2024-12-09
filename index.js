@@ -170,6 +170,7 @@ function createBleAgent() {
     let buttonBLE = document.getElementById('ble-button')
     let statusBLE = document.getElementById('ble-status')
     let telemetryDisplay = document.getElementById('telemetry')
+    let terminalDisplay = document.getElementById('terminal')
 
     const SERVICE_UUID_PESTOBLE = '27df26c5-83f4-4964-bae0-d7b7cb0a1f54';
     const CHARACTERISTIC_UUID_GAMEPAD = '452af57e-ad27-422c-88ae-76805ea641a9';
