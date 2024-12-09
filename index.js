@@ -221,6 +221,7 @@ function createBleAgent() {
                 characteristic_telemetry = await service.getCharacteristic(CHARACTERISTIC_UUID_TELEMETRY);
                 await characteristic_telemetry.startNotifications()
                 await characteristic_telemetry.addEventListener('characteristicvaluechanged', handleTelemetryCharacteristic);
+                await terminal_output.addEventListener('characteristicvaluechanged', handleTerminal);
             }catch{
                 console.log("Pestolink version on robot is real old :(")
             }
@@ -271,6 +272,18 @@ function createBleAgent() {
 
 
         //batteryDisplay.innerHTML = "&#x1F50B;&#xFE0E; " + voltage.toFixed(1) + "V";
+    }
+    function handleTerminal(event){
+
+        const value = event.target.value; // DataView of the characteristic's value
+    
+        let asciiString = '';
+        for (let i = 0; i < Math.min(8, value.byteLength); i++) {
+            asciiString += String.fromCharCode(value.getUint8(i));
+        }
+        //console.log('Received ASCII string:', asciiString);
+        terminal.innerHTML = terminal.innerHTML + "\n" + asciiString;
+
     }
 
     async function disconnectBLE() {
