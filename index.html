@@ -1,132 +1,168 @@
 <!DOCTYPE html>
 <html lang="en">
-
-<head>
-    <meta charset="UTF-8">
-    <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline';">
-    <link rel="shortcut icon" type="image/x-icon" href="favicon.ico">
-    <meta name="viewport"
-        content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="script-src 'self' 'unsafe-inline';"
+    />
+    <link rel="shortcut icon" type="image/x-icon" href="favicon.ico" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no"
+    />
 
     <title>PestoLink-Online</title>
-    <link rel="stylesheet" href="styles.css">
-</head>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
 
-<body>
-
+  <body>
     <div id="user-container">
-        <div class="container mobile-only" id="mobile-joystick">
-            <div id="joystick-background">
-                <div id="joystick-container"></div>
+      <div class="container mobile-only" id="mobile-joystick">
+        <div id="joystick-background">
+          <div id="joystick-container"></div>
+        </div>
+      </div>
+
+      <div class="container desktop-only" id="desktop-axis">
+        <div class="slider-non">Axis 0</div>
+        <div class="slider-non" id="axisValue0">127</div>
+        <div class="slider-bar" id="bar0"></div>
+
+        <div class="slider-non">Axis 1</div>
+        <div class="slider-non" id="axisValue1">127</div>
+        <div class="slider-bar" id="bar1"></div>
+
+        <div class="slider-non">Axis 2</div>
+        <div class="slider-non" id="axisValue2">127</div>
+        <div class="slider-bar" id="bar2"></div>
+
+        <div class="slider-non">Axis 3</div>
+        <div class="slider-non" id="axisValue3">127</div>
+        <div class="slider-bar" id="bar3"></div>
+      </div>
+
+      <div class="container" id="interface">
+        <button id="ble-button">🔗</button>
+        <button id="telemetry">no data</button>
+        <button id="ble-status">not connected</button>
+
+        <div id="settings-grid">
+          <div class="settings-label">Mobile Layout</div>
+
+          <div class="settings-toggle">
+            <div id="toggle-mobile-layout" class="toggle-round">
+              <div class="toggle-nub"></div>
             </div>
-        </div>
+          </div>
 
-        <div class="container desktop-only" id="desktop-axis">
-            <div class="slider-non">Axis 0</div>
-            <div class="slider-non" id="axisValue0">127</div>
-            <div class="slider-bar" id="bar0"></div>
+          <div class="settings-label help-row">
+            Override axes <br />
+            with WASD
+          </div>
 
-            <div class="slider-non">Axis 1</div>
-            <div class="slider-non" id="axisValue1">127</div>
-            <div class="slider-bar" id="bar1"></div>
-
-            <div class="slider-non">Axis 2</div>
-            <div class="slider-non" id="axisValue2">127</div>
-            <div class="slider-bar" id="bar2"></div>
-
-            <div class="slider-non">Axis 3</div>
-            <div class="slider-non" id="axisValue3">127</div>
-            <div class="slider-bar" id="bar3"></div>
-        </div>
-
-        <div class="container" id="interface">
-            <button id="ble-button">🔗</button>
-            <button id="telemetry">no data</button>
-            <button id="ble-status">not connected</button>
-
-            <div id="settings-grid">
-                <div class="settings-label">Mobile Layout</div>
-
-                <div class="settings-toggle">
-                    <div id="toggle-mobile-layout" class="toggle-round"><div class="toggle-nub"></div></div>
-                </div>
-
-                <div class="settings-label help-row">Override axes <br> with WASD</div>
-
-                <div class="settings-toggle help-row">
-                    <div id="toggle-keyboard-style" class="toggle-round"><div class="toggle-nub"></div></div>
-                </div>
-
-                <div class="settings-label help-row">Help/Info!</div>
-
-                <div class="settings-toggle help-row">
-                    <div id="toggle-info" class="toggle-round"><div class="toggle-nub"></div></div>
-                </div>
-
+          <div class="settings-toggle help-row">
+            <div id="toggle-keyboard-style" class="toggle-round">
+              <div class="toggle-nub"></div>
             </div>
-        </div>
+          </div>
 
-        <div class="container mobile-only" id="mobile-button">
-            <div></div>
-            <button id="button-3">3</button>
-            <div></div>
-            <button id="button-2">2</button>
-            <div></div>
-            <button id="button-1">1</button>
-            <div></div>
-            <button id="button-0">0</button>
-            <div></div>
-        </div>
+          <div class="settings-label help-row">Help/Info!</div>
 
-        <div class="container desktop-only" id="desktop-button">
-            <button id="buttonDesktop0">0</button>
-            <button id="buttonDesktop1">1</button>
-            <button id="buttonDesktop2">2</button>
-            <button id="buttonDesktop3">3</button>
-            <button id="buttonDesktop4">4</button>
-            <button id="buttonDesktop5">5</button>
-            <button id="buttonDesktop6">6</button>
-            <button id="buttonDesktop7">7</button>
-            <button id="buttonDesktop8">8</button>
-            <button id="buttonDesktop9">9</button>
-            <button id="buttonDesktop10">10</button>
-            <button id="buttonDesktop11">11</button>
-            <button id="buttonDesktop12">12</button>
-            <button id="buttonDesktop13">13</button>
-            <button id="buttonDesktop14">14</button>
-            <button id="buttonDesktop15">15</button>
+          <div class="settings-toggle help-row">
+            <div id="toggle-info" class="toggle-round">
+              <div class="toggle-nub"></div>
+            </div>
+          </div>
         </div>
+      </div>
+
+      <div class="container mobile-only" id="mobile-button">
+        <div></div>
+        <button id="button-3">3</button>
+        <div></div>
+        <button id="button-2">2</button>
+        <div></div>
+        <button id="button-1">1</button>
+        <div></div>
+        <button id="button-0">0</button>
+        <div></div>
+      </div>
+
+      <div class="container desktop-only" id="desktop-button">
+        <button id="buttonDesktop0">0</button>
+        <button id="buttonDesktop1">1</button>
+        <button id="buttonDesktop2">2</button>
+        <button id="buttonDesktop3">3</button>
+        <button id="buttonDesktop4">4</button>
+        <button id="buttonDesktop5">5</button>
+        <button id="buttonDesktop6">6</button>
+        <button id="buttonDesktop7">7</button>
+        <button id="buttonDesktop8">8</button>
+        <button id="buttonDesktop9">9</button>
+        <button id="buttonDesktop10">10</button>
+        <button id="buttonDesktop11">11</button>
+        <button id="buttonDesktop12">12</button>
+        <button id="buttonDesktop13">13</button>
+        <button id="buttonDesktop14">14</button>
+        <button id="buttonDesktop15">15</button>
+      </div>
     </div>
 
-    <div id="terminal-container">
-        <p id="terminal">>PestoLink Console (Developed by Ben P | 8738 | 74):
-        
-        </p>
+    <div
+      id="terminal-container"
+      style="height: 150px; width: 700px; overflow: auto"
+    >
+      <p id="terminal">PestoLink Console:</p>
     </div>
 
     <div id="info-container">
-        <p>
-            <u>Embedded Platform Support</u>
-            <br> <a href="https://github.com/AlfredoSystems/PestoLink-MicroPython">PestoLink</a> currently supports two embedded platforms, MicroPython and Arduino
-            (designed for <a href="https://www.sparkfun.com/products/22230">RP2040 on XRP Kits</a> and <a href="https://www.alfredosys.com/products/alfredo-nou2/">ESP32</a> respectively).
-            <br> MicroPython based robots use the module <a href="https://github.com/AlfredoSystems/PestoLink-MicroPython/tree/main">PestoLink-MicroPython</a>.
-            ,Arduino based robots use the library <a href="https://github.com/AlfredoSystems/PestoLink-Receive">PestoLink-Receive</a>.
+      <p>
+        <u>Embedded Platform Support</u>
+        <br />
+        <a href="https://github.com/AlfredoSystems/PestoLink-MicroPython"
+          >PestoLink</a
+        >
+        currently supports two embedded platforms, MicroPython and Arduino
+        (designed for
+        <a href="https://www.sparkfun.com/products/22230">RP2040 on XRP Kits</a>
+        and
+        <a href="https://www.alfredosys.com/products/alfredo-nou2/">ESP32</a>
+        respectively). <br />
+        MicroPython based robots use the module
+        <a
+          href="https://github.com/AlfredoSystems/PestoLink-MicroPython/tree/main"
+          >PestoLink-MicroPython</a
+        >. ,Arduino based robots use the library
+        <a href="https://github.com/AlfredoSystems/PestoLink-Receive"
+          >PestoLink-Receive</a
+        >.
 
-            <br><br> <u>Browser Support</u>
-            <br> PestoLink works with Google Chrome on Windows, Android, Mac, Linux, and ChromeOS.
-            <br>On iOS very few web browsers support webBluetooth. Google Chrome has worked for some people, but <a href="https://apps.apple.com/us/app/bluefy-web-ble-browser/id1492822055">Bluefy</a> is the best option found so far.
+        <br /><br />
+        <u>Browser Support</u> <br />
+        PestoLink works with Google Chrome on Windows, Android, Mac, Linux, and
+        ChromeOS. <br />On iOS very few web browsers support webBluetooth.
+        Google Chrome has worked for some people, but
+        <a
+          href="https://apps.apple.com/us/app/bluefy-web-ble-browser/id1492822055"
+          >Bluefy</a
+        >
+        is the best option found so far.
 
-            <br><br> <u>What does "Override axes with WASD" do?</u>
-            <br> By default, keyboard data is sent seperatly from axis/button data. If you would like to drive your robot using your keyboard,
-            you can enable this switch to override the axis/button data with keyboard input. 'WASD' wil override Axis 0 and 1, 'IJKL' will override Axis 2 and 3.
-            'ZXCVBNM,' will overide buttons 0 through 7.
+        <br /><br />
+        <u>What does "Override axes with WASD" do?</u> <br />
+        By default, keyboard data is sent seperatly from axis/button data. If
+        you would like to drive your robot using your keyboard, you can enable
+        this switch to override the axis/button data with keyboard input. 'WASD'
+        wil override Axis 0 and 1, 'IJKL' will override Axis 2 and 3. 'ZXCVBNM,'
+        will overide buttons 0 through 7.
 
-            <br><br> If you have any questions, feel free to reach out! (jrw4561@gmail.com)
-        </p>
+        <br /><br />
+        If you have any questions, feel free to reach out! (jrw4561@gmail.com)
+      </p>
     </div>
 
     <div id="hack-spacer"></div>
     <script src="index.js"></script>
-</body>
-
+  </body>
 </html>

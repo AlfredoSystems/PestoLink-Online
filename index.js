@@ -289,7 +289,7 @@ function createBleAgent() {
         }
         console.log('Received ASCII string:', asciiString);
         console.log(terminal.innerHTML);
-        terminalDisplay.innerHTML = terminalDisplay.innerHTML + "\n >" + asciiString;
+        terminalDisplay.innerHTML = terminalDisplay.innerHTML + "<br>>" + asciiString;
         console.log(terminal.innerHTML);
     }
 
