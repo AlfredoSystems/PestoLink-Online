@@ -284,13 +284,18 @@ function createBleAgent() {
         const value = event.target.value; // DataView of the characteristic's value
     
         let asciiString = '';
-        for (let i = 0; i < Math.min(64, value.byteLength); i++) {
+        for (let i = 0; i < Math.min(128, value.byteLength); i++) {
             asciiString += String.fromCharCode(value.getUint8(i));
         }
         console.log('Received ASCII string:', asciiString);
-        console.log(terminal.innerHTML);
-        terminalDisplay.innerHTML = terminalDisplay.innerHTML + "<br>>" + asciiString;
-        console.log(terminal.innerHTML);
+        if(asciiString == "CLEAR"){
+            terminalDisplay.innerHTML = "";
+        } else {
+            console.log(terminal.innerHTML);
+            terminalDisplay.innerHTML = terminalDisplay.innerHTML + "<br>>" + asciiString;
+            console.log(terminal.innerHTML);
+            terminal.scrollTop = terminal.scrollHeight;
+        }
     }
 
     async function disconnectBLE() {
