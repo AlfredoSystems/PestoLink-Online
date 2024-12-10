@@ -262,6 +262,7 @@ function createBleAgent() {
         //console.log('Received ASCII string:', asciiString);
         telemetryDisplay.innerHTML = asciiString;
         
+        
         // Parse the last three bytes as an RGB hex color code
         if (value.byteLength >= 9) {
             const r = value.getUint8(8).toString(16).padStart(2, '0');  // Red
@@ -288,7 +289,7 @@ function createBleAgent() {
         }
         console.log('Received ASCII string:', asciiString);
         console.log(terminal.innerHTML);
-        terminal.innerHTML = terminal.innerHTML + "\n>" + asciiString;
+        terminalDisplay.innerHTML = terminalDisplay.innerHTML + "\n>" + asciiString;
         console.log(terminal.innerHTML);
     }
 
