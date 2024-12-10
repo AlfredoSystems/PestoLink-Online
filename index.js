@@ -175,7 +175,7 @@ function createBleAgent() {
     const SERVICE_UUID_PESTOBLE = '27df26c5-83f4-4964-bae0-d7b7cb0a1f54';
     const CHARACTERISTIC_UUID_GAMEPAD = '452af57e-ad27-422c-88ae-76805ea641a9';
     const CHARACTERISTIC_UUID_TELEMETRY = '266d9d74-3e10-4fcd-88d2-cb63b5324d0c';
-    const CHARACTERISTIC_UUID_TERMINAL = 'b05b3414-9d3c-4121-ba16-f8dbaf4ef396';
+    const CHARACTERISTIC_UUID_TERMINAL = '433ec275-a494-40ab-98c2-4785a19bf830';
 
     if (isMobile){
         buttonBLE.ontouchend = updateBLE;
