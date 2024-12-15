@@ -560,7 +560,6 @@ function createGamepadAgent() {
         let buttonStates = 0; // Single integer to hold all 16 button states
         if (gamepad) {
             const buttonCount = Math.min(gamepad.buttons.length, 16); // Limit to 16 buttons
-
             for (let i = 0; i < buttonCount; i++) {
                 const button = gamepad.buttons[i];
                 if (button && button.pressed) {
@@ -575,12 +574,9 @@ function createGamepadAgent() {
                 }
             }
         }
-
-
         // Separate the 16-bit integer into two bytes
         const firstByte = buttonStates & 0xFF;        // Lower 8 bits
         const secondByte = (buttonStates >> 8) & 0xFF; // Upper 8 bits
-
         return { byte0: firstByte, byte1: secondByte };
     }
 
