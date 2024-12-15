@@ -61,6 +61,17 @@ body {
     font-size: 1vw;
 }
 
+#terminal-container {
+    box-sizing: border-box;
+    background: black;
+    width: 84vw;
+    margin: 1vw;
+    padding: 0.5vw;
+    padding-left: 2vw;
+    border-radius: 2vw;
+    font-size: 1vw;
+}
+
 #hack-spacer {
     display: grid;
     background: var(--alf-green);

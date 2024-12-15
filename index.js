@@ -177,10 +177,12 @@ function createBleAgent() {
     let buttonBLE = document.getElementById('ble-button')
     let statusBLE = document.getElementById('ble-status')
     let telemetryDisplay = document.getElementById('telemetry')
+    let terminalDisplay = document.getElementById('terminal')
 
     const SERVICE_UUID_PESTOBLE = '27df26c5-83f4-4964-bae0-d7b7cb0a1f54';
     const CHARACTERISTIC_UUID_GAMEPAD = '452af57e-ad27-422c-88ae-76805ea641a9';
     const CHARACTERISTIC_UUID_TELEMETRY = '266d9d74-3e10-4fcd-88d2-cb63b5324d0c';
+    const CHARACTERISTIC_UUID_TERMINAL = '433ec275-a494-40ab-98c2-4785a19bf830';
 
     if (isMobile){
         buttonBLE.ontouchend = updateBLE;
@@ -199,6 +201,7 @@ function createBleAgent() {
     let service;
     let characteristic_gamepad;
     let characteristic_telemetry;
+    let characteristic_terminal;
     let isConnectedBLE = false;
     let bleUpdateInProgress = false;
 
@@ -228,6 +231,9 @@ function createBleAgent() {
                 characteristic_telemetry = await service.getCharacteristic(CHARACTERISTIC_UUID_TELEMETRY);
                 await characteristic_telemetry.startNotifications()
                 await characteristic_telemetry.addEventListener('characteristicvaluechanged', handleTelemetryCharacteristic);
+                characteristic_terminal = await service.getCharacteristic(CHARACTERISTIC_UUID_TERMINAL);
+                await characteristic_terminal.startNotifications()
+                await characteristic_terminal.addEventListener('characteristicvaluechanged', handleTerminal);
             }catch{
                 console.log("Pestolink version on robot is real old :(")
             }
@@ -263,6 +269,7 @@ function createBleAgent() {
         //console.log('Received ASCII string:', asciiString);
         telemetryDisplay.innerHTML = asciiString;
         
+
         // Parse the last three bytes as an RGB hex color code
         if (value.byteLength >= 9) {
             const r = value.getUint8(8).toString(16).padStart(2, '0');  // Red
@@ -278,6 +285,25 @@ function createBleAgent() {
 
 
         //batteryDisplay.innerHTML = "&#x1F50B;&#xFE0E; " + voltage.toFixed(1) + "V";
+    }
+    function handleTerminal(event){
+
+        const value = event.target.value; // DataView of the characteristic's value
+    
+        let asciiString = '';
+        for (let i = 0; i < Math.min(64, value.byteLength); i++) {
+            asciiString += String.fromCharCode(value.getUint8(i));
+        }
+        console.log('Received ASCII string:', asciiString);
+        if(asciiString == "CLEAR"){
+            terminalDisplay.innerHTML = "";
+        } else {
+            console.log(terminal.innerHTML);
+            terminalDisplay.innerHTML = terminalDisplay.innerHTML + "<br>>" + asciiString;
+            console.log(terminal.innerHTML);
+            var textarea = document.getElementById('terminal-container');
+            textarea.scrollTop = textarea.scrollHeight;
+        }
     }
 
     async function disconnectBLE() {
@@ -532,16 +558,13 @@ function createGamepadAgent() {
     function getButtonBytes() {
         const gamepad = getSelectedGamepad();
         let buttonStates = 0; // Single integer to hold all 16 button states
-    
         if (gamepad) {
             const buttonCount = Math.min(gamepad.buttons.length, 16); // Limit to 16 buttons
-    
             for (let i = 0; i < buttonCount; i++) {
                 const button = gamepad.buttons[i];
                 if (button && button.pressed) {
                     buttonStates |= (1 << i); // Set the corresponding bit if the button is pressed
                 }
-    
                 // Update button visuals if DOM element exists
                 if (buttonElements[i]) {
                     const newColor = button && button.pressed ? 'var(--alf-green)' : 'grey';
@@ -551,11 +574,9 @@ function createGamepadAgent() {
                 }
             }
         }
-    
         // Separate the 16-bit integer into two bytes
         const firstByte = buttonStates & 0xFF;        // Lower 8 bits
         const secondByte = (buttonStates >> 8) & 0xFF; // Upper 8 bits
-    
         return { byte0: firstByte, byte1: secondByte };
     }
 
