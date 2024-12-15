@@ -1,5 +1,5 @@
 
-# [Try this fork of PestoLink-Online here!](http://pestol.ink/](https://benpark20.github.io/PestoLink-test/)
+# [Try this fork of PestoLink-Online here!](https://benpark20.github.io/PestoLink-test/)
 
 ## PestoLink-Online
 *This is a fork of the PestoLink-Online website created to add a console*
