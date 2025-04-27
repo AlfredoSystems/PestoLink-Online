@@ -543,7 +543,7 @@ function createGamepadAgent() {
         if (gamepad) {
             let buttonCount = gamepad.buttons.length;
             // expand the button array if the gamepad has more than 16 buttons
-            while(buttonCount > buttonElements.length - 1){
+            while(buttonElements.length < buttonCount){
                 buttonContainerDiv=document.getElementById('desktop-button');
                 newButton = document.createElement('button');
                 newButton.id = "buttonDesktop" + buttonElements.length;
