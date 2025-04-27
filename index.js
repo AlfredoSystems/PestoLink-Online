@@ -541,8 +541,17 @@ function createGamepadAgent() {
         let buttonStates = 0; // Single integer to hold all 16 button states
     
         if (gamepad) {
-            const buttonCount = Math.min(gamepad.buttons.length, 16); // Limit to 16 buttons
-    
+            let buttonCount = gamepad.buttons.length;
+            // expand the button array if the gamepad has more than 16 buttons
+            while(buttonCount > buttonElements.length - 1){
+                buttonContainerDiv=document.getElementById('desktop-button');
+                newButton = document.createElement('button');
+                newButton.id = "buttonDesktop" + buttonElements.length;
+                newButton.innerHTML = buttonElements.length;
+                buttonContainerDiv.appendChild(newButton);
+                buttonElements = document.querySelectorAll('[id^="buttonDesktop"]');
+            }
+
             for (let i = 0; i < buttonCount; i++) {
                 const button = gamepad.buttons[i];
                 if (button && button.pressed) {
