@@ -35,6 +35,10 @@ if (localStorage.getItem(toggleMobile.id) == null) {
  if(isMobile) for (let element of helpRow) element.style.display = "none";
 
 document.addEventListener('DOMContentLoaded', function () {
+    document.getElementById('refresh-button').addEventListener('click', () => {
+        window.location.reload();
+    });
+
     updateMobileSlider(toggleMobile, toggleState=false);
     updateSlider(toggleKeyboardWASD, toggleState=false);
     updateTerminalSlider(toggleTerminal, toggleState=false);

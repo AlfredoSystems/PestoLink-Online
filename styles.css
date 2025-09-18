@@ -340,3 +340,27 @@ body {
     background-color: white;
     border-radius: 50%;
 }
+
+#refresh-button {
+    position: absolute;
+    top: 1vw;
+    left: 1vw;
+    width: 5vw;
+    height: 5vw;
+    font-size: 3vw;
+    background-color: rgb(189, 188, 188);
+    border-radius: 1vw;
+    cursor: pointer;
+    border: none;
+    color: #e6e5e5;
+    text-align: center;
+    transition: background-color 0.3s, transform 0.1s, box-shadow 0.3s;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+#refresh-button:hover {
+    background-color: rgb(121, 121, 121);
+}
+#refresh-button:active {
+    transform: translateY(2px);
+}
+}
