@@ -37,7 +37,7 @@ if (localStorage.getItem(toggleMobile.id) == null) {
  }
 
  if (localStorage.getItem(toggleFocusZero.id) == null) {
-    localStorage.setItem(toggleFocusZero.id, 'true');
+    localStorage.setItem(toggleFocusZero.id, 'true'); // Default to 'on'
     updateSlider(toggleFocusZero, false);
  }
 
@@ -58,11 +58,9 @@ document.addEventListener('DOMContentLoaded', function () {
     updateSlider(toggleKeyboardWASD, toggleState=false);
     updateTerminalSlider(toggleTerminal, toggleState=false);
     updateSlider(toggleFocusZero, toggleState=false);
-
     toggleMobile.onmousedown = updateMobileSlider.bind(null, toggleMobile, toggleState=true)
     toggleKeyboardWASD.onmousedown = updateSlider.bind(null, toggleKeyboardWASD, toggleState=true)
     toggleTerminal.onmousedown =     updateTerminalSlider.bind(null, toggleTerminal, toggleState=true)
-    toggleFocusZero.onmousedown = updateSlider.bind(null, toggleFocusZero, toggleState=true)
     
     toggleMobile.ontouchstart = updateMobileSlider.bind(null, toggleMobile, toggleState=true)
     toggleKeyboardWASD.ontouchstart = updateSlider.bind(null, toggleKeyboardWASD, toggleState=true)
@@ -132,6 +130,32 @@ function setupGamepadSelection() {
     const btn = document.getElementById('gamepad-select-button');
     const span = document.getElementsByClassName('close-button')[0];
     const gamepadList = document.getElementById('gamepad-list');
+
+    // Setup toggle switch inside the modal
+    const focusToggle = document.getElementById('toggle-focus-zero');
+    focusToggle.onmousedown = updateSlider.bind(null, focusToggle, true);
+    focusToggle.ontouchstart = updateSlider.bind(null, focusToggle, true);
+
+    window.addEventListener('gamepadconnected', (event) => {
+        // If the modal is open, refresh the list to show the new gamepad.
+        if (modal.style.display === 'flex') {
+            populateGamepadList();
+        }
+    });
+
+    window.addEventListener('gamepaddisconnected', (event) => {
+        // If the disconnected gamepad was the one selected, find a new one.
+        if (selectedGamepadIndex === event.gamepad.index) {
+            const gamepads = navigator.getGamepads().filter(g => g && g.index !== event.gamepad.index);
+            // Select the first available gamepad, or default to 0 if none are left.
+            selectedGamepadIndex = gamepads.length > 0 ? gamepads[0].index : 0;
+        }
+
+        // If the modal is open, refresh the list.
+        if (modal.style.display === 'flex') {
+            populateGamepadList();
+        }
+    });
 
     btn.onclick = function() {
         populateGamepadList();

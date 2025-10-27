@@ -432,6 +432,25 @@ body {
     cursor: pointer;
 }
 
+.modal-setting {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+}
+
+.modal-setting .settings-label {
+    font-size: 16px; /* Use fixed size for modal */
+}
+
+.modal-divider {
+    border: none;
+    height: 1px;
+    background-color: #555;
+    margin: 10px 0;
+}
+
+
 #gamepad-list li {
     padding: 8px;
     cursor: pointer;
