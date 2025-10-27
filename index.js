@@ -20,6 +20,10 @@ let hackSpacerElement = document.getElementById("hack-spacer");
 let toggleMobile = document.getElementById('toggle-mobile-layout');
 let toggleKeyboardWASD = document.getElementById('toggle-keyboard-style');
 let toggleTerminal = document.getElementById('toggle-terminal');
+let toggleFocusZero = document.getElementById('toggle-focus-zero');
+
+let selectedGamepadIndex = 0;
+
 
 // --------------------------- state management ------------------------------------ //
 
@@ -32,6 +36,11 @@ if (localStorage.getItem(toggleMobile.id) == null) {
     updateMobileSlider(toggleMobile, false);
  }
 
+ if (localStorage.getItem(toggleFocusZero.id) == null) {
+    localStorage.setItem(toggleFocusZero.id, 'true');
+    updateSlider(toggleFocusZero, false);
+ }
+
  if(isMobile) for (let element of helpRow) element.style.display = "none";
 
 document.addEventListener('DOMContentLoaded', function () {
@@ -39,17 +48,26 @@ document.addEventListener('DOMContentLoaded', function () {
         window.location.reload();
     });
 
+    if (isMobile) {
+        document.getElementById('gamepad-select-button').style.display = 'none';
+    }
+
+    setupGamepadSelection();
+
     updateMobileSlider(toggleMobile, toggleState=false);
     updateSlider(toggleKeyboardWASD, toggleState=false);
     updateTerminalSlider(toggleTerminal, toggleState=false);
+    updateSlider(toggleFocusZero, toggleState=false);
 
     toggleMobile.onmousedown = updateMobileSlider.bind(null, toggleMobile, toggleState=true)
     toggleKeyboardWASD.onmousedown = updateSlider.bind(null, toggleKeyboardWASD, toggleState=true)
     toggleTerminal.onmousedown =     updateTerminalSlider.bind(null, toggleTerminal, toggleState=true)
+    toggleFocusZero.onmousedown = updateSlider.bind(null, toggleFocusZero, toggleState=true)
     
     toggleMobile.ontouchstart = updateMobileSlider.bind(null, toggleMobile, toggleState=true)
     toggleKeyboardWASD.ontouchstart = updateSlider.bind(null, toggleKeyboardWASD, toggleState=true)
     toggleTerminal.ontouchstart =     updateTerminalSlider.bind(null, toggleTerminal, toggleState=true)
+    toggleFocusZero.ontouchstart = updateSlider.bind(null, toggleFocusZero, toggleState=true)
     
     window.setInterval(renderLoop, 100); // call renderLoop every num milliseconds
 });
@@ -58,13 +76,15 @@ function updateMobileSlider(sliderElement, toggleState){
     updateSlider(sliderElement, toggleState);
 
     if (localStorage.getItem(toggleMobile.id) === 'true') {
-        for (let element of desktopElements) element.style.display = "none";
-        for (let element of mobileElements) element.style.display = "grid";
+        for (let element of desktopElements) { element.style.display = "none"; }
+        for (let element of mobileElements) { element.style.display = "grid"; }
         axisCallback = axisAgent.getAxes
         buttonCallback = buttonAgent.getButtons
     } else {
-        for (let element of mobileElements) element.style.display = "none";
-        for (let element of desktopElements) element.style.display = "grid";
+        for (let element of mobileElements) { element.style.display = "none"; }
+        // The gamepad button is handled separately as it's not a grid container.
+        for (let element of desktopElements) { element.style.display = "grid"; }
+
         axisCallback = gamepadAgent.getAxes
         buttonCallback = gamepadAgent.getButtons
     }
@@ -105,6 +125,44 @@ function updateSlider(sliderElement, toggleState){
     }
 }
 
+function setupGamepadSelection() {
+    if (isMobile) return;
+
+    const modal = document.getElementById('gamepad-modal');
+    const btn = document.getElementById('gamepad-select-button');
+    const span = document.getElementsByClassName('close-button')[0];
+    const gamepadList = document.getElementById('gamepad-list');
+
+    btn.onclick = function() {
+        populateGamepadList();
+        modal.style.display = 'flex';
+    }
+
+    span.onclick = function() {
+        modal.style.display = 'none';
+    }
+
+    window.onclick = function(event) {
+        if (event.target == modal) {
+            modal.style.display = 'none';
+        }
+    }
+
+    function populateGamepadList() {
+        gamepadList.innerHTML = '';
+        const gamepads = navigator.getGamepads().filter(g => g);
+        if (gamepads.length === 0) {
+            gamepadList.innerHTML = '<li>No gamepads connected.</li>';
+        } else {
+            gamepads.forEach(gamepad => {
+                const li = document.createElement('li');
+                li.textContent = `${gamepad.index}: ${gamepad.id}`;
+                li.onclick = () => { selectedGamepadIndex = gamepad.index; modal.style.display = 'none'; };
+                gamepadList.appendChild(li);
+            });
+        }
+    }
+}
 // ----------------------------------------- main --------------------------------------- //
 
 function renderLoop() {
@@ -162,13 +220,15 @@ function renderLoop() {
         }
     }
 
-    if (!document.hasFocus()) { 
-        rawPacket.fill(0, 0, 20);
-        rawPacket[0] = 1;
-        rawPacket[1] = 127;
-        rawPacket[2] = 127;
-        rawPacket[3] = 127;
-        rawPacket[4] = 127;
+    if (localStorage.getItem(toggleFocusZero.id) === 'true') {
+        if (!document.hasFocus()) { 
+            rawPacket.fill(0, 0, 20);
+            rawPacket[0] = 1;
+            rawPacket[1] = 127;
+            rawPacket[2] = 127;
+            rawPacket[3] = 127;
+            rawPacket[4] = 127;
+        }
     }
 
     //console.log(rawPacket)
@@ -576,16 +636,7 @@ function createMobileButtonAgent() {
 function createGamepadAgent() {
 
     function getFirstGamepad() {
-        let rawGamepads = navigator.getGamepads();
-        let gamepadsArray = Array.from(rawGamepads).filter(gamepad => gamepad);
-
-        //console.log(" ");
-        //console.log("raw gamepads from webAPI:");
-        //console.log(rawGamepads);
-        //console.log("filtered gamepad list:");
-        //console.log(gamepadsArray);
-
-        return gamepadsArray.find(gamepad => gamepad.index == 0);
+        return navigator.getGamepads()[selectedGamepadIndex];
     }
 
     var axisValueElements = document.querySelectorAll('[id^="axisValue"]');

@@ -15,6 +15,7 @@
 <body>
 
     <button id="refresh-button">🔄</button>
+    <button id="gamepad-select-button">🎮</button>
 
     <div id="user-container">
         <div class="container mobile-only" id="mobile-joystick">
@@ -66,6 +67,12 @@
                     <div id="toggle-terminal" class="toggle-round"><div class="toggle-nub"></div></div>
                 </div>
 
+                <div class="settings-label">Zero on focus loss</div>
+
+                <div class="settings-toggle">
+                    <div id="toggle-focus-zero" class="toggle-round"><div class="toggle-nub"></div></div>
+                </div>
+
             </div>
 
             <a href="https://github.com/AlfredoSystems/PestoLink-Online" target="_blank" id="github-link">Help and Info 🛈</a>
@@ -108,6 +115,15 @@
         <button id="terminal-clear-button">🧹</button>
         <button id="terminal-lock-button">🔓</button>
         <div id="terminal-log"></div>
+    </div>
+
+    <div id="gamepad-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <h2>Select Gamepad</h2>
+            <ul id="gamepad-list">
+            </ul>
+        </div>
     </div>
 
     <div id="hack-spacer"></div>
