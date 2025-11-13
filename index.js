@@ -379,7 +379,7 @@ function createBleAgent() {
         telemetryDisplay.innerHTML = asciiString;
         
         // Parse the last three bytes as an RGB hex color code
-        if (value.byteLength >= 9) {
+        if (value.byteLength >= 11) {
             const r = value.getUint8(8).toString(16).padStart(2, '0');  // Red
             const g = value.getUint8(9).toString(16).padStart(2, '0');  // Green
             const b = value.getUint8(10).toString(16).padStart(2, '0');  // Blue
@@ -389,6 +389,22 @@ function createBleAgent() {
         
             // Set the text shadow color
             telemetryDisplay.style.textShadow = `0 0 2px ${hexColor}, 0 0 2px ${hexColor}, 0 0 2px ${hexColor}, 0 0 2px ${hexColor}`;
+        }
+
+        // Check for rumble request
+        if (value.byteLength >= 12) {
+            const rumble = value.getUint8(11);
+            if (rumble === 1) {
+                const gamepad = navigator.getGamepads()[selectedGamepadIndex];
+                if (gamepad && gamepad.vibrationActuator) {
+                    gamepad.vibrationActuator.playEffect("dual-rumble", {
+                        startDelay: 0,
+                        duration: 150,
+                        weakMagnitude: 1.0,
+                        strongMagnitude: 1.0
+                    });
+                }
+            }
         }
 
 
