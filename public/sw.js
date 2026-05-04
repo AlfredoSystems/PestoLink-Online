@@ -12,9 +12,14 @@ self.addEventListener('fetch', (e) => {
   if (e.request.method !== 'GET' || !e.request.url.startsWith(self.location.origin)) return;
 
   // Navigation (HTML) — network-first so users always get the latest index.html.
-  // Falls back to cache only if offline.
+  // Falls back to cache if offline; returns a hard error only if both fail.
   if (e.request.mode === 'navigate') {
-    e.respondWith(fetch(e.request).catch(() => caches.match(e.request)));
+    e.respondWith(
+      fetch(e.request).catch(async () => {
+        const cached = await caches.match(e.request);
+        return cached ?? Response.error();
+      })
+    );
     return;
   }
 
@@ -23,9 +28,13 @@ self.addEventListener('fetch', (e) => {
     caches.open(CACHE).then(async (cache) => {
       const cached = await cache.match(e.request);
       if (cached) return cached;
-      const res = await fetch(e.request);
-      if (res.ok) cache.put(e.request, res.clone());
-      return res;
+      try {
+        const res = await fetch(e.request);
+        if (res.ok) cache.put(e.request, res.clone());
+        return res;
+      } catch {
+        return Response.error();
+      }
     })
   );
 });

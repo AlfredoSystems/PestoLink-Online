@@ -56,10 +56,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
     setupGamepadSelection();
 
-    updateMobileSlider(toggleMobile, toggleState=false);
-    updateSlider(toggleKeyboardWASD, toggleState=false);
-    updateTerminalSlider(toggleTerminal, toggleState=false);
-    updateSlider(toggleFocusZero, toggleState=false);
+    updateMobileSlider(toggleMobile, false);
+    updateSlider(toggleKeyboardWASD, false);
+    updateTerminalSlider(toggleTerminal, false);
+    updateSlider(toggleFocusZero, false);
     // pointerdown fires exactly once for both mouse and touch (no double-fire),
     // and works correctly in Electron, Chrome, and Capacitor.
     toggleMobile.addEventListener('pointerdown', updateMobileSlider.bind(null, toggleMobile, true));
