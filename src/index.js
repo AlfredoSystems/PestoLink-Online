@@ -326,13 +326,25 @@ function createBleAgent() {
         pickerCancelFn = null;
     }
 
+    function deviceLabel(id, name) {
+        // Chromium reports unresolved BLE names as "Unknown or Unsupported Device (MAC)".
+        // Trim that down to just the MAC so the list stays readable.
+        if (!name || name.startsWith('Unknown or Unsupported Device')) return id;
+        return name;
+    }
+
     function addPickerDevice(id, name, onSelect) {
+        const label = deviceLabel(id, name);
         for (const li of pickerList.querySelectorAll('li[data-device-id]')) {
-            if (li.dataset.deviceId === id) return; // already in list
+            if (li.dataset.deviceId === id) {
+                // Update if we now have a real name where we had a MAC fallback before.
+                if (label !== id && li.textContent === id) li.textContent = label;
+                return;
+            }
         }
         const li = document.createElement('li');
         li.dataset.deviceId = id;
-        li.textContent = name || id;
+        li.textContent = label;
         li.onclick = onSelect;
         pickerList.appendChild(li);
     }
@@ -489,23 +501,6 @@ function createBleAgent() {
         try {
             if (device == null){
                 displayBleStatus('Connecting', 'black');
-
-                const proceed = await new Promise((resolve) => {
-                    openPickerModal('Your browser will prompt you to select a Bluetooth device.');
-                    pickerCancelFn = () => { closePickerModal(); resolve(false); };
-
-                    const btn = document.createElement('li');
-                    btn.textContent = 'Connect...';
-                    btn.classList.add('picker-connect-btn');
-                    btn.onclick = () => { closePickerModal(); resolve(true); };
-                    pickerList.appendChild(btn);
-                });
-
-                if (!proceed) {
-                    displayBleStatus('Not Connected', 'black');
-                    return;
-                }
-
                 device = await navigator.bluetooth.requestDevice({ filters: [{ services: [SERVICE_UUID_PESTOBLE] }] });
             } else {
                 displayBleStatus(`Reconnecting to <br>${device.name}`, 'black');
@@ -775,10 +770,12 @@ function createMobileButtonAgent() {
     ];
 
     for (let i = 0; i < buttons.length; i++) {
-        buttons[i].onmousedown = handleButton.bind(null, i, true);
-        buttons[i].ontouchstart = handleButton.bind(null, i, true);
-        buttons[i].onclick = handleButton.bind(null, i, false);
-        buttons[i].ontouchend = handleButton.bind(null, i, false);
+        buttons[i].addEventListener('pointerdown', (e) => {
+            e.currentTarget.setPointerCapture(e.pointerId);
+            handleButton(i, true);
+        });
+        buttons[i].addEventListener('pointerup', handleButton.bind(null, i, false));
+        buttons[i].addEventListener('pointercancel', handleButton.bind(null, i, false));
     }
 
     function handleButton(buttonNumber, buttonState) {
