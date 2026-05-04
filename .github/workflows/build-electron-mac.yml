@@ -23,7 +23,7 @@ jobs:
         run: npm run build
 
       - name: Package macOS DMG (unsigned)
-        run: npx electron-builder --mac
+        run: npx electron-builder --mac --publish never
         env:
           # Skips Apple notarization — app will show "unidentified developer"
           # warning on first launch. Users can right-click → Open to bypass.
