@@ -25,10 +25,6 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run build
-        env:
-          # Matches the GitHub Pages subdirectory for this repo.
-          # Update if you use a custom domain at root (set to /).
-          VITE_BASE_URL: /PestoLink-Online/
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist
