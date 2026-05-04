@@ -2,13 +2,16 @@
   "name": "pestolink-online",
   "version": "1.0.0",
   "private": true,
+  "main": "electron/main.js",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
     "cap:sync": "cap sync",
     "cap:android": "cap open android",
-    "cap:ios": "cap open ios"
+    "cap:ios": "cap open ios",
+    "electron:dev": "npm run build && electron .",
+    "electron:build": "npm run build && electron-builder"
   },
   "dependencies": {
     "@capacitor-community/bluetooth-le": "^8.0.0",
@@ -18,7 +21,26 @@
   },
   "devDependencies": {
     "@capacitor/cli": "^8.0.0",
+    "electron": "^41.0.0",
+    "electron-builder": "^26.0.0",
     "typescript": "^6.0.3",
     "vite": "^6.0.0"
+  },
+  "build": {
+    "appId": "com.alfredosystems.pestolink",
+    "productName": "PestoLink",
+    "directories": {
+      "output": "electron-dist"
+    },
+    "files": [
+      "dist/**/*",
+      "electron/**/*"
+    ],
+    "win": {
+      "target": [{ "target": "nsis", "arch": ["x64"] }]
+    },
+    "mac": {
+      "target": [{ "target": "dmg", "arch": ["x64", "arm64"] }]
+    }
   }
 }

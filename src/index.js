@@ -60,14 +60,12 @@ document.addEventListener('DOMContentLoaded', function () {
     updateSlider(toggleKeyboardWASD, toggleState=false);
     updateTerminalSlider(toggleTerminal, toggleState=false);
     updateSlider(toggleFocusZero, toggleState=false);
-    toggleMobile.onmousedown = updateMobileSlider.bind(null, toggleMobile, toggleState=true)
-    toggleKeyboardWASD.onmousedown = updateSlider.bind(null, toggleKeyboardWASD, toggleState=true)
-    toggleTerminal.onmousedown =     updateTerminalSlider.bind(null, toggleTerminal, toggleState=true)
-
-    toggleMobile.ontouchstart = updateMobileSlider.bind(null, toggleMobile, toggleState=true)
-    toggleKeyboardWASD.ontouchstart = updateSlider.bind(null, toggleKeyboardWASD, toggleState=true)
-    toggleTerminal.ontouchstart =     updateTerminalSlider.bind(null, toggleTerminal, toggleState=true)
-    toggleFocusZero.ontouchstart = updateSlider.bind(null, toggleFocusZero, toggleState=true)
+    // pointerdown fires exactly once for both mouse and touch (no double-fire),
+    // and works correctly in Electron, Chrome, and Capacitor.
+    toggleMobile.addEventListener('pointerdown', updateMobileSlider.bind(null, toggleMobile, true));
+    toggleKeyboardWASD.addEventListener('pointerdown', updateSlider.bind(null, toggleKeyboardWASD, true));
+    toggleTerminal.addEventListener('pointerdown', updateTerminalSlider.bind(null, toggleTerminal, true));
+    toggleFocusZero.addEventListener('pointerdown', updateSlider.bind(null, toggleFocusZero, true));
 
     window.setInterval(renderLoop, 100);
 });
@@ -133,8 +131,7 @@ function setupGamepadSelection() {
     const gamepadList = document.getElementById('gamepad-list');
 
     const focusToggle = document.getElementById('toggle-focus-zero');
-    focusToggle.onmousedown = updateSlider.bind(null, focusToggle, true);
-    focusToggle.ontouchstart = updateSlider.bind(null, focusToggle, true);
+    // pointerdown already registered in DOMContentLoaded — no duplicate needed here.
 
     window.addEventListener('gamepadconnected', () => {
         if (modal.style.display === 'flex') populateGamepadList();
@@ -292,7 +289,7 @@ function createBleAgent() {
         statusBLE.style.backgroundColor = color;
     }
 
-    // Web Bluetooth state
+    // Web Bluetooth / Electron state
     let device = null;
     let characteristic_gamepad;
 
@@ -303,6 +300,44 @@ function createBleAgent() {
 
     let isConnectedBLE = false;
     let bleUpdateInProgress = false;
+
+    // ---- BLE picker modal ----
+
+    const pickerModal = document.getElementById('ble-picker-modal');
+    const pickerList = document.getElementById('ble-picker-list');
+    const pickerStatus = document.getElementById('ble-picker-status');
+    const pickerCloseBtn = document.getElementById('ble-picker-close');
+    let pickerCancelFn = null;
+
+    // Backdrop click closes the picker.
+    pickerModal.addEventListener('click', (e) => {
+        if (e.target === pickerModal && pickerCancelFn) pickerCancelFn();
+    });
+
+    function openPickerModal(statusText) {
+        pickerList.innerHTML = '';
+        pickerStatus.textContent = statusText;
+        pickerModal.style.display = 'flex';
+        pickerCloseBtn.onclick = () => { if (pickerCancelFn) pickerCancelFn(); };
+    }
+
+    function closePickerModal() {
+        pickerModal.style.display = 'none';
+        pickerCancelFn = null;
+    }
+
+    function addPickerDevice(id, name, onSelect) {
+        for (const li of pickerList.querySelectorAll('li[data-device-id]')) {
+            if (li.dataset.deviceId === id) return; // already in list
+        }
+        const li = document.createElement('li');
+        li.dataset.deviceId = id;
+        li.textContent = name || id;
+        li.onclick = onSelect;
+        pickerList.appendChild(li);
+    }
+
+    // ---- end BLE picker modal ----
 
     async function updateBLE() {
         if (bleUpdateInProgress) return
@@ -317,17 +352,52 @@ function createBleAgent() {
 
     async function connectBLE() {
         if (bleMode === 'native') await connectNative();
+        else if (bleMode === 'electron') await connectElectron();
         else await connectWebBluetooth();
     }
 
+    // Native (Capacitor iOS / Android): scan with startLEScan and show results
+    // in the custom picker. No OS-level device dialog is shown.
     async function connectNative() {
         try {
             if (nativeDeviceId == null) {
                 displayBleStatus('Connecting', 'black');
-                nativeBleClient = await getNativeBleClient();
-                const selected = await nativeBleClient.requestDevice({ services: [SERVICE_UUID_PESTOBLE] });
-                nativeDeviceId = selected.deviceId;
-                nativeDeviceName = selected.name;
+                if (!nativeBleClient) nativeBleClient = await getNativeBleClient();
+
+                const picked = await new Promise(async (resolve) => {
+                    openPickerModal('Searching for robots...');
+
+                    const hint = document.createElement('li');
+                    hint.classList.add('picker-hint');
+                    hint.textContent = 'Make sure your robot is powered on.';
+                    pickerList.appendChild(hint);
+
+                    pickerCancelFn = async () => {
+                        await nativeBleClient.stopLEScan().catch(() => {});
+                        closePickerModal();
+                        resolve(null);
+                    };
+
+                    await nativeBleClient.startLEScan(
+                        { services: [SERVICE_UUID_PESTOBLE] },
+                        (result) => {
+                            const { deviceId, name } = result.device;
+                            hint.remove();
+                            addPickerDevice(deviceId, name || deviceId, async () => {
+                                await nativeBleClient.stopLEScan().catch(() => {});
+                                closePickerModal();
+                                resolve({ deviceId, name: name || deviceId });
+                            });
+                        }
+                    );
+                });
+
+                if (!picked) {
+                    displayBleStatus('No Device Selected', '#eb5b5b');
+                    return;
+                }
+                nativeDeviceId = picked.deviceId;
+                nativeDeviceName = picked.name;
             } else {
                 displayBleStatus(`Reconnecting to <br>${nativeDeviceName}`, 'black');
             }
@@ -358,38 +428,90 @@ function createBleAgent() {
         }
     }
 
+    // Electron: show picker immediately, populate it via IPC as Chromium
+    // discovers devices, then resolve requestDevice() with the user's choice.
+    async function connectElectron() {
+        try {
+            if (device == null) {
+                displayBleStatus('Connecting', 'black');
+                openPickerModal('Searching for robots...');
+
+                window.electronBLE.onDeviceList((devices) => {
+                    if (devices.length > 0) pickerStatus.textContent = 'Select a device:';
+                    devices.forEach(({ deviceId, deviceName }) => {
+                        addPickerDevice(deviceId, deviceName || deviceId, () => {
+                            // Close the picker immediately for snappy feel; requestDevice()
+                            // will resolve once the main process receives the selection.
+                            closePickerModal();
+                            window.electronBLE.removeListeners();
+                            window.electronBLE.selectDevice(deviceId);
+                        });
+                    });
+                });
+
+                pickerCancelFn = () => {
+                    window.electronBLE.removeListeners();
+                    window.electronBLE.cancel(); // tells main to call callback('') → requestDevice throws
+                    closePickerModal();
+                };
+
+                device = await navigator.bluetooth.requestDevice({
+                    filters: [{ services: [SERVICE_UUID_PESTOBLE] }]
+                });
+
+                // Clean up in case the modal was not already closed (e.g. device
+                // resolved before the user interacted with the list).
+                window.electronBLE.removeListeners();
+                closePickerModal();
+            } else {
+                displayBleStatus(`Reconnecting to <br>${device.name}`, 'black');
+            }
+
+            await connectGATT();
+        } catch (error) {
+            window.electronBLE?.removeListeners();
+            closePickerModal();
+            if (error.name === 'NotFoundError') {
+                displayBleStatus('No Device Selected', '#eb5b5b');
+            } else {
+                console.log(error);
+                displayBleStatus('Connection failed', '#eb5b5b');
+                connectElectron();
+            }
+        }
+    }
+
+    // Web Bluetooth (Chrome on desktop / Android Chrome / Android PWA):
+    // The browser security model requires its own device picker UI — we cannot
+    // replace it. Show a brief modal so the user knows what's coming, then
+    // open the browser picker when they confirm.
     async function connectWebBluetooth() {
         try {
             if (device == null){
                 displayBleStatus('Connecting', 'black');
+
+                const proceed = await new Promise((resolve) => {
+                    openPickerModal('Your browser will prompt you to select a Bluetooth device.');
+                    pickerCancelFn = () => { closePickerModal(); resolve(false); };
+
+                    const btn = document.createElement('li');
+                    btn.textContent = 'Connect...';
+                    btn.classList.add('picker-connect-btn');
+                    btn.onclick = () => { closePickerModal(); resolve(true); };
+                    pickerList.appendChild(btn);
+                });
+
+                if (!proceed) {
+                    displayBleStatus('Not Connected', 'black');
+                    return;
+                }
+
                 device = await navigator.bluetooth.requestDevice({ filters: [{ services: [SERVICE_UUID_PESTOBLE] }] });
             } else {
                 displayBleStatus(`Reconnecting to <br>${device.name}`, 'black');
             }
 
-            const server = await device.gatt.connect();
-            const service = await server.getPrimaryService(SERVICE_UUID_PESTOBLE);
-
-            characteristic_gamepad = await service.getCharacteristic(CHARACTERISTIC_UUID_GAMEPAD);
-
-            try {
-                const ct = await service.getCharacteristic(CHARACTERISTIC_UUID_TELEMETRY);
-                await ct.startNotifications();
-                ct.addEventListener('characteristicvaluechanged', (e) => handleTelemetryData(e.target.value));
-            } catch { console.log("Telemetry characteristic not available."); }
-
-            try {
-                const cc = await service.getCharacteristic(CHARACTERISTIC_UUID_TERMINAL);
-                await cc.startNotifications();
-                cc.addEventListener('characteristicvaluechanged', (e) => handleTerminalData(e.target.value));
-            } catch { console.log("Terminal characteristic not available."); }
-
-            device.addEventListener('gattserverdisconnected', robotDisconnect);
-
-            isConnectedBLE = true;
-            buttonBLE.innerHTML = '❌';
-            displayBleStatus(`Connected to <br>${device.name}`, '#4dae50');
-
+            await connectGATT();
         } catch (error) {
             if (error.name === 'NotFoundError') {
                 displayBleStatus('No Device Selected', '#eb5b5b');
@@ -401,6 +523,32 @@ function createBleAgent() {
                 connectWebBluetooth();
             }
         }
+    }
+
+    // Shared GATT setup used by both connectElectron and connectWebBluetooth.
+    async function connectGATT() {
+        const server = await device.gatt.connect();
+        const service = await server.getPrimaryService(SERVICE_UUID_PESTOBLE);
+
+        characteristic_gamepad = await service.getCharacteristic(CHARACTERISTIC_UUID_GAMEPAD);
+
+        try {
+            const ct = await service.getCharacteristic(CHARACTERISTIC_UUID_TELEMETRY);
+            await ct.startNotifications();
+            ct.addEventListener('characteristicvaluechanged', (e) => handleTelemetryData(e.target.value));
+        } catch { console.log("Telemetry characteristic not available."); }
+
+        try {
+            const cc = await service.getCharacteristic(CHARACTERISTIC_UUID_TERMINAL);
+            await cc.startNotifications();
+            cc.addEventListener('characteristicvaluechanged', (e) => handleTerminalData(e.target.value));
+        } catch { console.log("Terminal characteristic not available."); }
+
+        device.addEventListener('gattserverdisconnected', robotDisconnect);
+
+        isConnectedBLE = true;
+        buttonBLE.innerHTML = '❌';
+        displayBleStatus(`Connected to <br>${device.name}`, '#4dae50');
     }
 
     // Unified data handlers — accept a DataView directly (works for both paths).

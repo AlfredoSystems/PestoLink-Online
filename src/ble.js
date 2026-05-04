@@ -9,6 +9,7 @@
 
 export function getBleMode() {
   if (window.Capacitor?.isNativePlatform()) return 'native';
+  if (window.electronBLE) return 'electron';
 
   const ua = navigator.userAgent;
   // iPad on iOS 13+ reports as MacIntel with touch support

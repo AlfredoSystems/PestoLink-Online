@@ -512,3 +512,51 @@ body {
 #gamepad-list li:hover {
     background-color: #ddd;
 }
+
+/* ---- BLE picker modal ---- */
+
+#ble-picker-status {
+    font-weight: normal;
+    font-size: 14px;
+    opacity: 0.85;
+    margin: 8px 0 4px;
+}
+
+#ble-picker-list {
+    margin: 0;
+    padding: 0;
+}
+
+#ble-picker-list li {
+    list-style-type: none;
+    padding: 10px 12px;
+    border-radius: 6px;
+    margin: 4px 0;
+    cursor: pointer;
+}
+
+#ble-picker-list li:hover {
+    background-color: #777;
+}
+
+.picker-hint {
+    cursor: default !important;
+    opacity: 0.6;
+    font-size: 13px;
+}
+
+.picker-hint:hover {
+    background-color: transparent !important;
+}
+
+.picker-connect-btn {
+    background-color: var(--alf-green);
+    text-align: center;
+    margin-top: 8px;
+}
+
+.picker-connect-btn:hover {
+    background-color: #3d9e40 !important;
+}
+
+/* ---- end BLE picker modal ---- */

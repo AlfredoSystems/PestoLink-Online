@@ -1,0 +1,38 @@
+name: Build macOS App
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build web assets
+        run: npm run build
+
+      - name: Package macOS DMG (unsigned)
+        run: npx electron-builder --mac
+        env:
+          # Skips Apple notarization — app will show "unidentified developer"
+          # warning on first launch. Users can right-click → Open to bypass.
+          # To enable notarization, add APPLE_ID, APPLE_APP_SPECIFIC_PASSWORD,
+          # and APPLE_TEAM_ID secrets and remove this line.
+          CSC_IDENTITY_AUTO_DISCOVERY: false
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pestolink-mac-${{ github.sha }}
+          path: electron-dist/*.dmg
+          retention-days: 30
