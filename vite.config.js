@@ -1,5 +1,6 @@
 import { defineConfig } from 'vite';
 import { resolve } from 'path';
+import { readFileSync, writeFileSync } from 'fs';
 
 export default defineConfig({
   // Use './' so Electron and Capacitor can load assets via file:// URLs.
@@ -12,6 +13,14 @@ export default defineConfig({
     emptyOutDir: true,
   },
   plugins: [
+    {
+      name: 'sw-cache-buster',
+      closeBundle() {
+        const swPath = resolve(__dirname, 'dist', 'sw.js');
+        const content = readFileSync(swPath, 'utf-8');
+        writeFileSync(swPath, content.replace('__BUILD_DATE__', Date.now()));
+      },
+    },
     {
       // Vite injects `crossorigin` on <script type="module"> and <link> tags.
       // Chromium rejects these with ERR_FAILED when loading via file:// because

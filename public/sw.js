@@ -1,5 +1,5 @@
 // Minimal service worker — enables PWA installability and basic offline fallback.
-const CACHE = 'pestolink-v2';
+const CACHE = 'pestolink-__BUILD_DATE__';
 
 self.addEventListener('install', () => self.skipWaiting());
 self.addEventListener('activate', (e) => e.waitUntil(
