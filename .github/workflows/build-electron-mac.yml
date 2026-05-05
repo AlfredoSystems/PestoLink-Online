@@ -3,7 +3,11 @@ name: Build macOS App
 on:
   push:
     branches: [main]
+    tags: ['v*']
   workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
   build:
@@ -36,3 +40,8 @@ jobs:
           name: pestolink-mac-${{ github.sha }}
           path: electron-dist/*.dmg
           retention-days: 30
+
+      - uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: electron-dist/*.dmg
