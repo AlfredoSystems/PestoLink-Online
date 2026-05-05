@@ -37,9 +37,11 @@
       "electron/**/*"
     ],
     "win": {
+      "icon": "public/favicon.ico",
       "target": [{ "target": "nsis", "arch": ["x64"] }]
     },
     "mac": {
+      "icon": "public/favicon.ico",
       "target": [{ "target": "dmg", "arch": ["x64", "arm64"] }]
     }
   }
