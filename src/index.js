@@ -309,16 +309,21 @@ function createBleAgent() {
     const pickerCloseBtn = document.getElementById('ble-picker-close');
     let pickerCancelFn = null;
 
-    // Backdrop click closes the picker.
-    pickerModal.addEventListener('click', (e) => {
-        if (e.target === pickerModal && pickerCancelFn) pickerCancelFn();
+    function closePicker() {
+        if (pickerCancelFn) pickerCancelFn();
+        else closePickerModal();
+    }
+
+    // Wire X and backdrop once with pointerdown — reliable on Android WebView.
+    pickerCloseBtn.addEventListener('pointerdown', closePicker);
+    pickerModal.addEventListener('pointerdown', (e) => {
+        if (e.target === pickerModal) closePicker();
     });
 
     function openPickerModal(statusText) {
         pickerList.innerHTML = '';
         pickerStatus.textContent = statusText;
         pickerModal.style.display = 'flex';
-        pickerCloseBtn.onclick = () => { if (pickerCancelFn) pickerCancelFn(); };
     }
 
     function closePickerModal() {
@@ -345,7 +350,7 @@ function createBleAgent() {
         const li = document.createElement('li');
         li.dataset.deviceId = id;
         li.textContent = label;
-        li.onclick = onSelect;
+        li.addEventListener('pointerdown', onSelect);
         pickerList.appendChild(li);
     }
 
@@ -368,7 +373,7 @@ function createBleAgent() {
         else await connectWebBluetooth();
     }
 
-    // Native (Capacitor iOS / Android): scan with startLEScan and show results
+    // Native (Capacitor iOS / Android): scan with requestLEScan and show results
     // in the custom picker. No OS-level device dialog is shown.
     async function connectNative() {
         try {
@@ -376,7 +381,7 @@ function createBleAgent() {
                 displayBleStatus('Connecting', 'black');
                 if (!nativeBleClient) nativeBleClient = await getNativeBleClient();
 
-                const picked = await new Promise(async (resolve) => {
+                const picked = await new Promise((resolve, reject) => {
                     openPickerModal('Searching for robots...');
 
                     const hint = document.createElement('li');
@@ -390,18 +395,27 @@ function createBleAgent() {
                         resolve(null);
                     };
 
-                    await nativeBleClient.startLEScan(
-                        {},
+                    nativeBleClient.requestLEScan(
+                        { services: [SERVICE_UUID_PESTOBLE] },
                         (result) => {
                             const { deviceId, name } = result.device;
                             hint.remove();
-                            addPickerDevice(deviceId, name || deviceId, async () => {
-                                await nativeBleClient.stopLEScan().catch(() => {});
+                            addPickerDevice(deviceId, name || deviceId, () => {
+                                nativeBleClient.stopLEScan().catch(() => {});
                                 closePickerModal();
                                 resolve({ deviceId, name: name || deviceId });
                             });
                         }
-                    );
+                    ).catch(err => {
+                        // Show error inside the modal so user can read it then tap X.
+                        const msg = err?.message ?? 'unknown error';
+                        hint.remove();
+                        pickerStatus.textContent = msg.toLowerCase().includes('permission')
+                            ? 'Permission denied — enable Bluetooth & Location in Settings.'
+                            : 'Scan failed: ' + msg;
+                        // X button now just closes without stopping scan (already stopped).
+                        pickerCancelFn = () => { closePickerModal(); resolve(null); };
+                    });
                 });
 
                 if (!picked) {
@@ -432,10 +446,13 @@ function createBleAgent() {
             const msg = error?.message ?? '';
             if (msg.includes('cancelled') || msg.includes('User cancelled')) {
                 displayBleStatus('No Device Selected', '#eb5b5b');
+            } else if (msg.includes('permission') || msg.includes('Permission')) {
+                displayBleStatus('Bluetooth permission denied', '#eb5b5b');
+            } else if (msg.includes('disabled') || msg.includes('Bluetooth is not enabled')) {
+                displayBleStatus('Bluetooth is off', '#eb5b5b');
             } else {
                 console.log(error);
-                displayBleStatus('Connection failed', '#eb5b5b');
-                connectNative();
+                displayBleStatus('Scan failed: ' + msg, '#eb5b5b');
             }
         }
     }
