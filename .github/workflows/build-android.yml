@@ -37,6 +37,9 @@ jobs:
       - name: Sync Capacitor
         run: npx cap sync android
 
+      - name: Generate app icons
+        run: npm run cap:icons
+
       - name: Build debug APK and AAB
         working-directory: android
         run: ./gradlew assembleDebug bundleDebug

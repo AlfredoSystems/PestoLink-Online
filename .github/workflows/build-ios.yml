@@ -39,6 +39,9 @@ jobs:
       - name: Sync Capacitor
         run: npx cap sync ios
 
+      - name: Generate app icons
+        run: npm run cap:icons
+
       - name: Install CocoaPods dependencies
         working-directory: ios/App
         run: pod install

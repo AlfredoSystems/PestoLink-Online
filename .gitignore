@@ -11,3 +11,6 @@ ios/
 # Electron build output and builder cache
 electron-dist/
 electron-builder-cache/
+
+# Generated icon files (produced by scripts/generate-icons.js)
+build/

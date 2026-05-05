@@ -6,12 +6,16 @@
   "private": true,
   "main": "electron/main.js",
   "scripts": {
+    "icons": "node scripts/generate-icons.js",
+    "predev": "npm run icons",
     "dev": "vite",
+    "prebuild": "npm run icons",
     "build": "vite build",
     "preview": "vite preview",
     "cap:sync": "cap sync",
     "cap:android": "cap open android",
     "cap:ios": "cap open ios",
+    "cap:icons": "capacitor-assets generate --iconBackgroundColor \"#4dae50\" --iconBackgroundColorDark \"#4dae50\"",
     "electron:dev": "npm run build && electron .",
     "electron:build": "npm run build && electron-builder"
   },
@@ -22,6 +26,8 @@
     "@capacitor/ios": "^8.0.0"
   },
   "devDependencies": {
+    "@capacitor/assets": "^3.0.5",
+    "sharp": "^0.34.0",
     "@capacitor/cli": "^8.0.0",
     "electron": "^41.0.0",
     "electron-builder": "^26.0.0",
@@ -39,12 +45,27 @@
       "electron/**/*"
     ],
     "win": {
-      "icon": "public/favicon.ico",
-      "target": [{ "target": "nsis", "arch": ["x64"] }]
+      "icon": "build/icon.ico",
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
     },
     "mac": {
-      "icon": "public/favicon.ico",
-      "target": [{ "target": "dmg", "arch": ["x64", "arm64"] }]
+      "icon": "build/icon.png",
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        }
+      ]
     }
   }
 }

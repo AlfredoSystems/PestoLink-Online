@@ -384,14 +384,14 @@ function createBleAgent() {
                     hint.textContent = 'Make sure your robot is powered on.';
                     pickerList.appendChild(hint);
 
-                    pickerCancelFn = async () => {
-                        await nativeBleClient.stopLEScan().catch(() => {});
+                    pickerCancelFn = () => {
+                        nativeBleClient.stopLEScan().catch(() => {});
                         closePickerModal();
                         resolve(null);
                     };
 
                     await nativeBleClient.startLEScan(
-                        { services: [SERVICE_UUID_PESTOBLE] },
+                        {},
                         (result) => {
                             const { deviceId, name } = result.device;
                             hint.remove();
