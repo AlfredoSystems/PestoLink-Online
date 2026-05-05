@@ -1,8 +1,6 @@
 
 # [Try PestoLink-Online here!](http://pestol.ink/)
 
-*v1.0.0*
-
 Special thanks to @benPark20 for console code!
 
 ## Embedded Platform Support

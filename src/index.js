@@ -46,7 +46,7 @@ if (localStorage.getItem(toggleMobile.id) == null) {
  if(isMobile) for (let element of helpRow) element.style.display = "none";
 
 document.addEventListener('DOMContentLoaded', function () {
-    document.getElementById('refresh-button').addEventListener('click', () => {
+    document.getElementById('refresh-button').addEventListener('pointerdown', () => {
         window.location.reload();
     });
 
@@ -67,6 +67,7 @@ document.addEventListener('DOMContentLoaded', function () {
     toggleTerminal.addEventListener('pointerdown', updateTerminalSlider.bind(null, toggleTerminal, true));
     toggleFocusZero.addEventListener('pointerdown', updateSlider.bind(null, toggleFocusZero, true));
 
+    setupSettings();
     window.setInterval(renderLoop, 100);
 });
 
@@ -122,6 +123,36 @@ function updateSlider(sliderElement, toggleState){
     }
 }
 
+function setupSettings() {
+    const modal = document.getElementById('settings-modal');
+    const btn = document.getElementById('settings-button');
+    const closeBtn = document.getElementById('settings-close');
+
+    btn.addEventListener('pointerdown', () => { modal.style.display = 'flex'; });
+    closeBtn.addEventListener('pointerdown', () => { modal.style.display = 'none'; });
+    modal.addEventListener('pointerdown', (e) => {
+        if (e.target === modal) modal.style.display = 'none';
+    });
+
+    const options = modal.querySelectorAll('.theme-option');
+    const saved = localStorage.getItem('color-theme') || 'system';
+    applyTheme(saved);
+    options.forEach(opt => {
+        opt.classList.toggle('active', opt.dataset.value === saved);
+        opt.addEventListener('pointerdown', () => {
+            const val = opt.dataset.value;
+            localStorage.setItem('color-theme', val);
+            applyTheme(val);
+            options.forEach(o => o.classList.toggle('active', o.dataset.value === val));
+        });
+    });
+}
+
+function applyTheme(value) {
+    if (value === 'system') document.documentElement.removeAttribute('data-theme');
+    else document.documentElement.setAttribute('data-theme', value);
+}
+
 function setupGamepadSelection() {
     if (isMobile) return;
 
@@ -145,20 +176,16 @@ function setupGamepadSelection() {
         if (modal.style.display === 'flex') populateGamepadList();
     });
 
-    btn.onclick = function() {
+    btn.addEventListener('pointerdown', () => {
         populateGamepadList();
         modal.style.display = 'flex';
-    }
+    });
 
-    span.onclick = function() {
-        modal.style.display = 'none';
-    }
+    span.addEventListener('pointerdown', () => { modal.style.display = 'none'; });
 
-    window.onclick = function(event) {
-        if (event.target == modal) {
-            modal.style.display = 'none';
-        }
-    }
+    window.addEventListener('pointerdown', (event) => {
+        if (event.target == modal) modal.style.display = 'none';
+    });
 
     function populateGamepadList() {
         gamepadList.innerHTML = '';
@@ -169,7 +196,7 @@ function setupGamepadSelection() {
             gamepads.forEach(gamepad => {
                 const li = document.createElement('li');
                 li.textContent = `${gamepad.index}: ${gamepad.id}`;
-                li.onclick = () => { selectedGamepadIndex = gamepad.index; modal.style.display = 'none'; };
+                li.addEventListener('pointerdown', () => { selectedGamepadIndex = gamepad.index; modal.style.display = 'none'; });
                 gamepadList.appendChild(li);
             });
         }
@@ -262,7 +289,7 @@ function createBleAgent() {
         document.getElementById('ble-warning-message').textContent = warning.message + ' ';
         document.getElementById('ble-warning-detail').textContent = warning.detail;
         banner.style.display = 'flex';
-        document.getElementById('ble-warning-close').onclick = () => banner.style.display = 'none';
+        document.getElementById('ble-warning-close').addEventListener('pointerdown', () => banner.style.display = 'none');
         buttonBLE.disabled = true;
         statusBLE.innerHTML = 'BLE not supported';
         return { attemptSend: () => {} };
@@ -273,15 +300,9 @@ function createBleAgent() {
     const CHARACTERISTIC_UUID_TELEMETRY = '266d9d74-3e10-4fcd-88d2-cb63b5324d0c';
     const CHARACTERISTIC_UUID_TERMINAL = '433ec275-a494-40ab-98c2-4785a19bf830';
 
-    if (isMobile){
-        buttonBLE.ontouchend = updateBLE;
-        terminalClearButton.ontouchend = clearTerminal;
-        terminalLockButton.ontouchend = toggleTerminalLock;
-    } else {
-        buttonBLE.onclick = updateBLE;
-        terminalClearButton.onclick = clearTerminal;
-        terminalLockButton.onclick = toggleTerminalLock;
-    }
+    buttonBLE.addEventListener('pointerdown', updateBLE);
+    terminalClearButton.addEventListener('pointerdown', clearTerminal);
+    terminalLockButton.addEventListener('pointerdown', toggleTerminalLock);
 
     function displayBleStatus(status, color) {
         statusBLE.innerHTML = status;

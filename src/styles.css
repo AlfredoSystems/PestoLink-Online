@@ -1,6 +1,35 @@
 :root {
     --alf-green: #4dae50;
     --alf-beige: #efe4b0;
+
+    /* Light mode (default) */
+    --bg-body:              var(--alf-green);
+    --bg-container:         var(--alf-beige);
+    --bg-button:            rgb(189, 188, 188);
+    --bg-button-hover:      rgb(121, 121, 121);
+    --bg-button-active:     rgb(159, 159, 159);
+    --bg-modal:             #808080;
+    --bg-settings:          #808080;
+    --bg-joystick:          white;
+    --bg-slider-bar:        rgb(141, 168, 204);
+    --modal-divider:        #555;
+    --list-item-hover:      #777;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg-body:          #1a1a1a;
+        --bg-container:     #2d2d2d;
+        --bg-button:        #3d3d3d;
+        --bg-button-hover:  #505050;
+        --bg-button-active: #454545;
+        --bg-modal:         #2d2d2d;
+        --bg-settings:      #3a3a3a;
+        --bg-joystick:      #444;
+        --bg-slider-bar:    #3a5a7a;
+        --modal-divider:    #555;
+        --list-item-hover:  #4a4a4a;
+    }
 }
 
 html,
@@ -27,7 +56,7 @@ a:hover {color: hotpink;}
 
 body {
     box-sizing: border-box;
-    background: var(--alf-green);
+    background: var(--bg-body);
     display: flex;
     justify-content: center;
     align-items: center;
@@ -90,7 +119,7 @@ body {
     display: flex;
     box-sizing: border-box;
     margin: 0.5vw;
-    background: var(--alf-beige);
+    background: var(--bg-container);
     border-radius: 2vw;
 }
 
@@ -123,7 +152,7 @@ body {
 
 #terminal-container button {
     position: absolute;
-    background-color: rgb(189, 188, 188);
+    background-color: var(--bg-button);
     border-radius: 1vw;
     font-size: 3vw;
     width: 5vw;
@@ -136,10 +165,10 @@ body {
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 #terminal-container button:hover {
-    background-color: rgb(121, 121, 121);
+    background-color: var(--bg-button-hover);
 }
 #terminal-container button:active {
-    background-color: rgb(159, 159, 159);
+    background-color: var(--bg-button-active);
     transform: translateY(2px);
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
@@ -155,7 +184,7 @@ body {
 
 #hack-spacer {
     display: grid;
-    background: var(--alf-green);
+    background: var(--bg-body);
     width: 84vw;
     margin: 1vw;
     height: 6vw;
@@ -190,7 +219,7 @@ body {
 
 #joystick-background {
     border-radius: 1vw;
-    background: white;
+    background: var(--bg-joystick);
     display: flex;
     justify-content: center;
     align-items: center;
@@ -212,14 +241,14 @@ body {
     width: 22vw;
     height: 30vw;
     display: grid;
-    grid-template-rows: 1fr 1fr 2fr 1fr;
+    grid-template-rows: 1fr 1fr 2fr;
     grid-template-columns: 1fr 1fr;
     grid-gap: 1vw;
     padding: 1vw;
 }
 
 #ble-button {
-    background-color: rgb(189, 188, 188);
+    background-color: var(--bg-button);
     border-radius: 1vw;
     font-size: 4vw;
     grid-row: 1;
@@ -232,10 +261,10 @@ body {
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 #ble-button:hover {
-    background-color: rgb(121, 121, 121);
+    background-color: var(--bg-button-hover);
 }
 #ble-button:active {
-    background-color: rgb(159, 159, 159);
+    background-color: var(--bg-button-active);
     transform: translateY(2px);
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
@@ -245,7 +274,7 @@ body {
 }
 
 #telemetry {
-    background-color: grey;
+    background-color: var(--bg-settings);
     color: white;
     overflow: hidden;
     border-radius: 1vw;
@@ -265,31 +294,35 @@ body {
 }
 
 #github-link {
-    background-color: rgb(189, 188, 188);
+    position: absolute;
+    top: 7vw;
+    right: 1vw;
+    width: 5vw;
+    height: 5vw;
+    font-size: 3vw;
+    background-color: var(--bg-button);
     border-radius: 1vw;
-    font-size: 2vw;
-    grid-column: span 2;
     cursor: pointer;
     border: none;
     color: #e6e5e5;
     text-align: center;
+    text-decoration: none;
+    display: flex;
+    justify-content: center;
+    align-items: center;
     transition: background-color 0.3s, transform 0.1s, box-shadow 0.3s;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    text-shadow: -1.5px -1.5px 1px #303030, 1.5px -1.5px 1px #303030, -1.5px 1.5px 1px #303030, 1.5px 1.5px 1px #303030;
-    text-decoration: none;
 }
 #github-link:hover {
-    background-color: rgb(121, 121, 121);
+    background-color: var(--bg-button-hover);
 }
 #github-link:active {
-    background-color: rgb(159, 159, 159);
     transform: translateY(2px);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 #mobile-button button {
     font-size: 5vw;
-    background-color: grey;
+    background-color: var(--bg-settings);
     transform: scale(1.3);
     border-radius: 100%;
     cursor: pointer;
@@ -308,7 +341,7 @@ body {
 
 #desktop-button button {
     font-size: 2vw;
-    background: grey;
+    background: var(--bg-settings);
     border: none;
     border-radius: 1vw;
 }
@@ -328,7 +361,7 @@ body {
 }
 
 .slider-non {
-    background-color: grey;
+    background-color: var(--bg-settings);
     border-radius: 1vw;
     display: flex;
     justify-content: center;
@@ -338,7 +371,7 @@ body {
 .slider-bar {
     border-radius: 1vw;
     width: 12vw;
-    background: rgb(141, 168, 204);
+    background: var(--bg-slider-bar);
 }
 
 #settings-grid {
@@ -348,7 +381,7 @@ body {
     grid-column-gap: 0.5vw;
     grid-template-columns: 2fr 1fr;
     grid-column: span 2;
-    background-color: grey;
+    background-color: var(--bg-settings);
     border-radius: 1vw;
     justify-content: center;
     align-items: center;
@@ -378,7 +411,7 @@ body {
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: rgb(189, 188, 188);
+    background-color: var(--bg-button);
     border-radius: 3vw;
 }
 
@@ -400,7 +433,7 @@ body {
     width: 5vw;
     height: 5vw;
     font-size: 3vw;
-    background-color: rgb(189, 188, 188);
+    background-color: var(--bg-button);
     border-radius: 1vw;
     cursor: pointer;
     border: none;
@@ -410,7 +443,7 @@ body {
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 #refresh-button:hover {
-    background-color: rgb(121, 121, 121);
+    background-color: var(--bg-button-hover);
 }
 #refresh-button:active {
     transform: translateY(2px);
@@ -423,7 +456,7 @@ body {
     width: 5vw;
     height: 5vw;
     font-size: 3vw;
-    background-color: rgb(189, 188, 188);
+    background-color: var(--bg-button);
     border-radius: 1vw;
     cursor: pointer;
     border: none;
@@ -433,13 +466,36 @@ body {
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 #gamepad-select-button:hover {
-    background-color: rgb(121, 121, 121);
+    background-color: var(--bg-button-hover);
 }
 #gamepad-select-button:active {
     transform: translateY(2px);
 }
 .desktop-only#gamepad-select-button {
     display: block;
+}
+
+#settings-button {
+    position: absolute;
+    top: 1vw;
+    right: 1vw;
+    width: 5vw;
+    height: 5vw;
+    font-size: 3vw;
+    background-color: var(--bg-button);
+    border-radius: 1vw;
+    cursor: pointer;
+    border: none;
+    color: #e6e5e5;
+    text-align: center;
+    transition: background-color 0.3s, transform 0.1s, box-shadow 0.3s;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+#settings-button:hover {
+    background-color: var(--bg-button-hover);
+}
+#settings-button:active {
+    transform: translateY(2px);
 }
 
 
@@ -458,7 +514,7 @@ body {
 }
 
 .modal-content {
-    background-color: grey;
+    background-color: var(--bg-modal);
     margin: auto;
     padding: 20px;
     border-radius: 1vw;
@@ -498,7 +554,7 @@ body {
 .modal-divider {
     border: none;
     height: 1px;
-    background-color: #555;
+    background-color: var(--modal-divider);
     margin: 10px 0;
 }
 
@@ -510,7 +566,7 @@ body {
 }
 
 #gamepad-list li:hover {
-    background-color: #ddd;
+    background-color: var(--list-item-hover);
 }
 
 /* ---- BLE picker modal ---- */
@@ -536,7 +592,7 @@ body {
 }
 
 #ble-picker-list li:hover {
-    background-color: #777;
+    background-color: var(--list-item-hover);
 }
 
 .picker-hint {
@@ -560,3 +616,60 @@ body {
 }
 
 /* ---- end BLE picker modal ---- */
+
+/* ---- theme slider ---- */
+
+.theme-slider {
+    display: flex;
+    border-radius: 8px;
+    overflow: hidden;
+    background: var(--bg-button);
+}
+
+.theme-option {
+    padding: 6px 10px;
+    cursor: pointer;
+    font-size: 13px;
+    white-space: nowrap;
+    transition: background-color 0.2s;
+}
+
+.theme-option.active {
+    background-color: var(--alf-green);
+}
+
+.theme-option:hover:not(.active) {
+    background-color: var(--bg-button-hover);
+}
+
+/* ---- end theme slider ---- */
+
+/* ---- data-theme overrides (beat the media query via specificity) ---- */
+
+html[data-theme="light"] {
+    --bg-body:          var(--alf-green);
+    --bg-container:     var(--alf-beige);
+    --bg-button:        rgb(189, 188, 188);
+    --bg-button-hover:  rgb(121, 121, 121);
+    --bg-button-active: rgb(159, 159, 159);
+    --bg-modal:         #808080;
+    --bg-settings:      #808080;
+    --bg-joystick:      white;
+    --bg-slider-bar:    rgb(141, 168, 204);
+    --modal-divider:    #555;
+    --list-item-hover:  #777;
+}
+
+html[data-theme="dark"] {
+    --bg-body:          #1a1a1a;
+    --bg-container:     #2d2d2d;
+    --bg-button:        #3d3d3d;
+    --bg-button-hover:  #505050;
+    --bg-button-active: #454545;
+    --bg-modal:         #2d2d2d;
+    --bg-settings:      #3a3a3a;
+    --bg-joystick:      #444;
+    --bg-slider-bar:    #3a5a7a;
+    --modal-divider:    #555;
+    --list-item-hover:  #4a4a4a;
+}
