@@ -17,6 +17,7 @@ function createWindow() {
     width: 1200,
     height: 800,
     backgroundColor: '#4dae50',
+    icon: path.join(__dirname, '..', 'public', 'favicon.ico'),
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,

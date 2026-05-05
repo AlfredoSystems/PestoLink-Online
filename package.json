@@ -1,6 +1,8 @@
 {
   "name": "pestolink-online",
   "version": "1.0.0",
+  "description": "Robot drivestation by AlfredoSystems",
+  "author": "Jacob Williams",
   "private": true,
   "main": "electron/main.js",
   "scripts": {

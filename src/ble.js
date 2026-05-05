@@ -21,7 +21,6 @@ export function getBleMode() {
     window.matchMedia('(display-mode: standalone)').matches ||
     window.navigator.standalone === true;
 
-  if (isIOS && isPWA) return 'unsupported-ios-pwa';
   if (isSafari) return 'unsupported-safari';
   if ('bluetooth' in navigator) return 'web-bluetooth';
   return 'unsupported-browser';
@@ -31,10 +30,6 @@ export const BLE_WARNINGS = {
   'unsupported-safari': {
     message: 'Safari does not support Bluetooth.',
     detail: 'Use Chrome on Android, or install the PestoLink iOS app.',
-  },
-  'unsupported-ios-pwa': {
-    message: 'iOS home screen apps do not support Bluetooth.',
-    detail: 'Install the PestoLink iOS app for full Bluetooth support.',
   },
   'unsupported-browser': {
     message: 'Your browser does not support Web Bluetooth.',
