@@ -294,30 +294,14 @@ body {
 }
 
 #github-link {
-    position: absolute;
-    top: 7vw;
-    right: 1vw;
-    width: 5vw;
-    height: 5vw;
-    font-size: 3vw;
-    background-color: var(--bg-button);
-    border-radius: 1vw;
-    cursor: pointer;
-    border: none;
-    color: #e6e5e5;
-    text-align: center;
+    display: block;
+    padding: 10px 0;
+    font-size: 15px;
+    color: rgb(0, 195, 255);
     text-decoration: none;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    transition: background-color 0.3s, transform 0.1s, box-shadow 0.3s;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 #github-link:hover {
-    background-color: var(--bg-button-hover);
-}
-#github-link:active {
-    transform: translateY(2px);
+    color: hotpink;
 }
 
 #mobile-button button {
