@@ -31,14 +31,15 @@ jobs:
       - name: Build web assets
         run: npm run build
 
-      - name: Add iOS platform
-        run: npx cap add ios
-
       - name: Sync Capacitor
         run: npx cap sync ios
 
       - name: Generate app icons
         run: npm run cap:icons
+
+      - name: Install CocoaPods dependencies
+        working-directory: ios/App
+        run: pod install
 
       - name: Set up App Store Connect API key
         env:
