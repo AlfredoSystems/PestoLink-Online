@@ -39,10 +39,6 @@ jobs:
       - name: Generate app icons
         run: npm run cap:icons
 
-      - name: Install CocoaPods dependencies
-        working-directory: ios/App
-        run: pod install
-
       - name: Set up App Store Connect API key
         env:
           ASC_KEY_ID: ${{ secrets.ASC_API_KEY_ID }}
