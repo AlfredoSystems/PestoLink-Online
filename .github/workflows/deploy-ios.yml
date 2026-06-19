@@ -6,12 +6,22 @@ on:
   workflow_dispatch:
 
 # Secrets required (set in GitHub repo Settings → Secrets → Actions):
-#   ASC_API_KEY_ID       – Key ID from App Store Connect → Users & Access → Integrations → Keys
-#   ASC_API_ISSUER_ID    – Issuer ID from the same page
-#   ASC_API_KEY          – Raw contents of the downloaded AuthKey_*.p8 file
-#                          (open in Notepad, Select All, copy everything including the
-#                           -----BEGIN PRIVATE KEY----- and -----END PRIVATE KEY----- lines)
-#   APPLE_TEAM_ID        – 10-character Team ID from developer.apple.com/account → Membership
+#   ASC_API_KEY_ID           – Key ID from App Store Connect → Users & Access → Integrations → Keys
+#   ASC_API_ISSUER_ID        – Issuer ID from the same page
+#   ASC_API_KEY              – Raw contents of the downloaded AuthKey_*.p8 file
+#   APPLE_TEAM_ID            – 10-character Team ID (e.g. PUWBPS6P3S)
+#   APPLE_DIST_CERT_BASE64   – base64-encoded distribution .p12 — generate on Windows (Git Bash):
+#                                openssl genrsa -out dist.key 2048
+#                                MSYS_NO_PATHCONV=1 openssl req -new -key dist.key -out dist.csr -subj "/CN=PestoLink/C=US"
+#                                Upload dist.csr: developer.apple.com → Certs → + → Apple Distribution
+#                                Download distribution.cer, then:
+#                                openssl x509 -inform DER -in distribution.cer -out dist.pem
+#                                openssl pkcs12 -export -inkey dist.key -in dist.pem -out dist.p12 -passout pass:build
+#                                PowerShell: [Convert]::ToBase64String([IO.File]::ReadAllBytes("$HOME\dist.p12")) | clip
+#   APPLE_PROV_PROFILE_BASE64 – base64-encoded App Store Distribution .mobileprovision:
+#                                developer.apple.com → Profiles → + → Distribution → App Store Connect
+#                                Select App ID com.alfredosystems.pestolink + Distribution cert → download
+#                                PowerShell: [Convert]::ToBase64String([IO.File]::ReadAllBytes("$HOME\Downloads\<file>.mobileprovision")) | clip
 
 jobs:
   deploy:
@@ -36,6 +46,11 @@ jobs:
       - name: Generate app icons
         run: npm run cap:icons
 
+      - name: Select latest Xcode
+        run: |
+          sudo xcode-select -s $(ls -d /Applications/Xcode_*.app | sort -V | tail -1)/Contents/Developer
+          xcodebuild -version
+
       - name: Set up App Store Connect API key
         env:
           ASC_KEY_ID: ${{ secrets.ASC_API_KEY_ID }}
@@ -44,21 +59,54 @@ jobs:
           mkdir -p ~/.appstoreconnect/private_keys
           printf '%s' "$ASC_KEY_CONTENT" | tr -d '\r' > ~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8
 
+      - name: Import Distribution certificate
+        env:
+          CERT_BASE64: ${{ secrets.APPLE_DIST_CERT_BASE64 }}
+        run: |
+          python3 -c "import base64,os; open('dist_cert.p12','wb').write(base64.b64decode(os.environ['CERT_BASE64']))"
+          security create-keychain -p "build" build.keychain
+          security default-keychain -s build.keychain
+          security unlock-keychain -p "build" build.keychain
+          security import dist_cert.p12 -k build.keychain -P "build" -A -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple: -s -k "build" build.keychain
+
+      - name: Install provisioning profile
+        env:
+          PROFILE_BASE64: ${{ secrets.APPLE_PROV_PROFILE_BASE64 }}
+        run: |
+          python3 -c "import base64,os; open('profile.mobileprovision','wb').write(base64.b64decode(os.environ['PROFILE_BASE64']))"
+          mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles/
+          cp profile.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/
+          PROFILE_UUID=$(security cms -D -i profile.mobileprovision | grep -A1 '<key>UUID</key>' | grep '<string>' | sed 's/.*<string>\(.*\)<\/string>.*/\1/' | tr -d '\t ')
+          echo "PROFILE_UUID=$PROFILE_UUID" >> $GITHUB_ENV
+
+      - name: Resolve SPM packages
+        run: |
+          xcodebuild -resolvePackageDependencies \
+            -project ios/App/App.xcodeproj \
+            -scheme App
+
       - name: Archive
         env:
           ASC_KEY_ID: ${{ secrets.ASC_API_KEY_ID }}
           ASC_ISSUER_ID: ${{ secrets.ASC_API_ISSUER_ID }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: |
           xcodebuild archive \
             -project ios/App/App.xcodeproj \
             -scheme App \
             -configuration Release \
+            -destination 'generic/platform=iOS' \
             -archivePath ios/build/App.xcarchive \
             -allowProvisioningUpdates \
             -authenticationKeyPath ~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8 \
             -authenticationKeyID "$ASC_KEY_ID" \
             -authenticationKeyIssuerID "$ASC_ISSUER_ID" \
-            -resolvePackageDependencies
+            DEVELOPMENT_TEAM="$APPLE_TEAM_ID" \
+            CODE_SIGN_STYLE=Manual \
+            CODE_SIGN_IDENTITY="Apple Distribution" \
+            PROVISIONING_PROFILE_SPECIFIER="$PROFILE_UUID"
+          test -d ios/build/App.xcarchive || (echo "Archive was not created" && exit 1)
 
       - name: Export IPA
         env:
@@ -72,11 +120,18 @@ jobs:
           <plist version="1.0">
           <dict>
               <key>method</key>
-              <string>app-store</string>
+              <string>app-store-connect</string>
               <key>teamID</key>
               <string>${APPLE_TEAM_ID}</string>
               <key>signingStyle</key>
-              <string>automatic</string>
+              <string>manual</string>
+              <key>signingCertificate</key>
+              <string>Apple Distribution</string>
+              <key>provisioningProfiles</key>
+              <dict>
+                  <key>com.alfredosystems.pestolink</key>
+                  <string>${PROFILE_UUID}</string>
+              </dict>
           </dict>
           </plist>
           EOF
