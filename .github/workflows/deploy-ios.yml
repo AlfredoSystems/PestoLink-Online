@@ -9,8 +9,9 @@ on:
 # Secrets required (set in GitHub repo Settings → Secrets → Actions):
 #   ASC_API_KEY_ID       – Key ID from App Store Connect → Users & Access → Integrations → Keys
 #   ASC_API_ISSUER_ID    – Issuer ID from the same page
-#   ASC_API_KEY          – Contents of the downloaded AuthKey_*.p8 file, base64-encoded
-#                          PowerShell: [Convert]::ToBase64String([IO.File]::ReadAllBytes("AuthKey_XXX.p8"))
+#   ASC_API_KEY          – Raw contents of the downloaded AuthKey_*.p8 file
+#                          (open in Notepad, Select All, copy everything including the
+#                           -----BEGIN PRIVATE KEY----- and -----END PRIVATE KEY----- lines)
 #   APPLE_TEAM_ID        – 10-character Team ID from developer.apple.com/account → Membership
 
 jobs:
@@ -45,7 +46,7 @@ jobs:
           ASC_KEY_CONTENT: ${{ secrets.ASC_API_KEY }}
         run: |
           mkdir -p ~/.appstoreconnect/private_keys
-          echo "$ASC_KEY_CONTENT" | base64 --decode > ~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8
+          printf '%s' "$ASC_KEY_CONTENT" | tr -d '\r' > ~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8
 
       - name: Archive
         env:
