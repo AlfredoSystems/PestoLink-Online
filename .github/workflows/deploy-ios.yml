@@ -2,8 +2,7 @@ name: Deploy iOS to App Store
 
 on:
   push:
-    tags:
-      - 'v*'
+    branches: [main]
   workflow_dispatch:
 
 # Secrets required (set in GitHub repo Settings → Secrets → Actions):
@@ -37,10 +36,6 @@ jobs:
       - name: Generate app icons
         run: npm run cap:icons
 
-      - name: Install CocoaPods dependencies
-        working-directory: ios/App
-        run: pod install
-
       - name: Set up App Store Connect API key
         env:
           ASC_KEY_ID: ${{ secrets.ASC_API_KEY_ID }}
@@ -55,14 +50,15 @@ jobs:
           ASC_ISSUER_ID: ${{ secrets.ASC_API_ISSUER_ID }}
         run: |
           xcodebuild archive \
-            -workspace ios/App/App.xcworkspace \
+            -project ios/App/App.xcodeproj \
             -scheme App \
             -configuration Release \
             -archivePath ios/build/App.xcarchive \
             -allowProvisioningUpdates \
             -authenticationKeyPath ~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8 \
             -authenticationKeyID "$ASC_KEY_ID" \
-            -authenticationKeyIssuerID "$ASC_ISSUER_ID"
+            -authenticationKeyIssuerID "$ASC_ISSUER_ID" \
+            -resolvePackageDependencies
 
       - name: Export IPA
         env:
