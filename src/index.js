@@ -1,4 +1,7 @@
 import { getBleMode, BLE_WARNINGS, getNativeBleClient } from './ble.js';
+import { ScreenOrientation } from '@capacitor/screen-orientation';
+
+ScreenOrientation.lock({ orientation: 'landscape' }).catch(() => {});
 
 let isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
 

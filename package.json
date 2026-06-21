@@ -23,14 +23,15 @@
     "@capacitor-community/bluetooth-le": "^8.0.0",
     "@capacitor/android": "^8.0.0",
     "@capacitor/core": "^8.0.0",
-    "@capacitor/ios": "^8.0.0"
+    "@capacitor/ios": "^8.0.0",
+    "@capacitor/screen-orientation": "^8.0.1"
   },
   "devDependencies": {
     "@capacitor/assets": "^3.0.5",
-    "sharp": "^0.34.0",
     "@capacitor/cli": "^8.0.0",
     "electron": "^41.0.0",
     "electron-builder": "^26.0.0",
+    "sharp": "^0.34.0",
     "typescript": "^6.0.3",
     "vite": "^6.0.0"
   },
