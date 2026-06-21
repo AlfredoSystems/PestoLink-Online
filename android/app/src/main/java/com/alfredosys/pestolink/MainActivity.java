@@ -6,8 +6,6 @@ import android.view.View;
 import android.view.WindowInsets;
 import android.view.WindowInsetsController;
 import android.view.WindowManager;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowInsetsCompat;
 import com.getcapacitor.BridgeActivity;
 
 public class MainActivity extends BridgeActivity {
@@ -22,10 +20,6 @@ public class MainActivity extends BridgeActivity {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             getWindow().setDecorFitsSystemWindows(false);
         }
-
-        // Prevent Capacitor's WebView from padding itself for cutout/system bars
-        ViewCompat.setOnApplyWindowInsetsListener(getBridge().getWebView(),
-            (v, insets) -> WindowInsetsCompat.CONSUMED);
     }
 
     @Override
