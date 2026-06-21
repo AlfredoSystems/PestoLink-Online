@@ -129,7 +129,7 @@ jobs:
               <string>Apple Distribution</string>
               <key>provisioningProfiles</key>
               <dict>
-                  <key>com.alfredosystems.pestolink</key>
+                  <key>com.alfredosys.pestolink</key>
                   <string>${PROFILE_UUID}</string>
               </dict>
           </dict>
