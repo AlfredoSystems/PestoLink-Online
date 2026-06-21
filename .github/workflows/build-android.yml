@@ -60,11 +60,13 @@ jobs:
           ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: |
+          VERSION_CODE=$(git rev-list --count HEAD)
           ./gradlew assembleRelease bundleRelease \
             -Pandroid.injected.signing.store.file=$(pwd)/../release.keystore \
             -Pandroid.injected.signing.store.password="$ANDROID_STORE_PASSWORD" \
             -Pandroid.injected.signing.key.alias="$ANDROID_KEY_ALIAS" \
-            -Pandroid.injected.signing.key.password="$ANDROID_KEY_PASSWORD"
+            -Pandroid.injected.signing.key.password="$ANDROID_KEY_PASSWORD" \
+            -Pandroid.injected.version.code=$VERSION_CODE
 
       - uses: actions/upload-artifact@v4
         with:
