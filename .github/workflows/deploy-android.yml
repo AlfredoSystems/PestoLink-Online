@@ -60,7 +60,8 @@ jobs:
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: |
           VERSION_CODE=$(git rev-list --count HEAD)
-          sed -i "s/versionCode 1/versionCode $VERSION_CODE/" app/build.gradle
+          sed -i "s/versionCode [0-9]*/versionCode $VERSION_CODE/" app/build.gradle
+          grep "versionCode" app/build.gradle
           ./gradlew assembleRelease bundleRelease \
             -Pandroid.injected.signing.store.file=$(pwd)/../release.keystore \
             -Pandroid.injected.signing.store.password="$ANDROID_STORE_PASSWORD" \
