@@ -1,4 +1,4 @@
-name: Build Android APK and AAB
+name: Deploy Android to Google Play
 
 # Secrets required:
 #   ANDROID_KEYSTORE_BASE64  – base64-encoded release keystore
@@ -44,7 +44,6 @@ jobs:
       - name: Sync Capacitor
         run: npx cap sync android
 
-
       - name: Generate app icons
         run: npm run cap:icons
 
@@ -61,12 +60,12 @@ jobs:
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: |
           VERSION_CODE=$(git rev-list --count HEAD)
+          sed -i "s/versionCode 1/versionCode $VERSION_CODE/" app/build.gradle
           ./gradlew assembleRelease bundleRelease \
             -Pandroid.injected.signing.store.file=$(pwd)/../release.keystore \
             -Pandroid.injected.signing.store.password="$ANDROID_STORE_PASSWORD" \
             -Pandroid.injected.signing.key.alias="$ANDROID_KEY_ALIAS" \
-            -Pandroid.injected.signing.key.password="$ANDROID_KEY_PASSWORD" \
-            -Pandroid.injected.version.code=$VERSION_CODE
+            -Pandroid.injected.signing.key.password="$ANDROID_KEY_PASSWORD"
 
       - uses: actions/upload-artifact@v4
         with:
