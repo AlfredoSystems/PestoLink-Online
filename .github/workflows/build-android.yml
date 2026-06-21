@@ -76,3 +76,11 @@ jobs:
           name: pestolink-aab-${{ github.sha }}
           path: android/app/build/outputs/bundle/release/app-release.aab
           retention-days: 30
+
+      - name: Upload to Google Play (Internal Testing)
+        uses: r0adkll/upload-google-play@v1
+        with:
+          serviceAccountJsonPlainText: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
+          packageName: com.alfredosystems.pestolink
+          releaseFiles: android/app/build/outputs/bundle/release/app-release.aab
+          track: internal
