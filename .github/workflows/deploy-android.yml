@@ -40,17 +40,8 @@ jobs:
       - name: Build web assets
         run: npm run build
 
-      - name: Add Android platform
-        run: npx cap add android
-
       - name: Sync Capacitor
         run: npx cap sync android
-
-      - name: Patch Android native files
-        run: |
-          sed -i 's/android:launchMode="singleTask"/android:launchMode="singleTask" android:screenOrientation="sensorLandscape"/' \
-            android/app/src/main/AndroidManifest.xml
-          cp -r android-patches/. android/
 
       - name: Generate app icons
         run: npm run cap:icons

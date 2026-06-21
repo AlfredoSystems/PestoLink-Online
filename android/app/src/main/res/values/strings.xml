@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">PestoLink</string>
+    <string name="title_activity_main">PestoLink</string>
+    <string name="package_name">com.alfredosystems.pestolink</string>
+    <string name="custom_url_scheme">com.alfredosystems.pestolink</string>
+</resources>
