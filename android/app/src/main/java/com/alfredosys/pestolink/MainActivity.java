@@ -1,4 +1,4 @@
-package com.alfredosystems.pestolink;
+package com.alfredosys.pestolink;
 
 import com.getcapacitor.BridgeActivity;
 
