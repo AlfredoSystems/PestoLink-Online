@@ -1,7 +1,7 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'com.alfredosystems.pestolink',
+  appId: 'com.alfredosys.pestolink',
   appName: 'PestoLink',
   webDir: 'dist',
   plugins: {

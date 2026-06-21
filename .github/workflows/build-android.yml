@@ -44,6 +44,7 @@ jobs:
       - name: Sync Capacitor
         run: npx cap sync android
 
+
       - name: Generate app icons
         run: npm run cap:icons
 
@@ -81,6 +82,6 @@ jobs:
         uses: r0adkll/upload-google-play@v1
         with:
           serviceAccountJsonPlainText: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
-          packageName: com.alfredosystems.pestolink
+          packageName: com.alfredosys.pestolink
           releaseFiles: android/app/build/outputs/bundle/release/app-release.aab
           track: internal
