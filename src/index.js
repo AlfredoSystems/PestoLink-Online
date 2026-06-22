@@ -49,7 +49,8 @@ if (localStorage.getItem(toggleMobile.id) == null) {
  if(isMobile) for (let element of helpRow) element.style.display = "none";
 
 document.addEventListener('DOMContentLoaded', function () {
-    document.getElementById('refresh-button').addEventListener('pointerdown', () => {
+    document.getElementById('refresh-button').addEventListener('pointerdown', async () => {
+        await bleAgent.cleanup();
         window.location.reload();
     });
 
@@ -324,6 +325,7 @@ function createBleAgent() {
 
     let isConnectedBLE = false;
     let bleUpdateInProgress = false;
+    let userDisconnecting = false;
 
     // ---- BLE picker modal ----
 
@@ -652,6 +654,7 @@ function createBleAgent() {
 
     async function disconnectBLE() {
         displayBleStatus('Disconnecting', 'gray');
+        userDisconnecting = true;
         try {
             batteryWatchdogStop();
             if (bleMode === 'native') {
@@ -666,10 +669,13 @@ function createBleAgent() {
         } catch (error) {
             displayBleStatus('Error', '#eb5b5b');
             console.error('Error:', error);
+        } finally {
+            userDisconnecting = false;
         }
     }
 
     function robotDisconnect() {
+        if (userDisconnecting) return;
         batteryWatchdogStop();
         displayBleStatus('Not Connected', 'black');
         isConnectedBLE = false;
@@ -706,8 +712,16 @@ function createBleAgent() {
         if (timer) { clearTimeout(timer); timer = null; }
     }
 
+    async function cleanup() {
+        if (isConnectedBLE && bleMode === 'native' && nativeDeviceId) {
+            userDisconnecting = true;
+            try { await nativeBleClient.disconnect(nativeDeviceId); } catch {}
+        }
+    }
+
     return {
-        attemptSend: sendPacketBLE
+        attemptSend: sendPacketBLE,
+        cleanup,
     };
 }
 
