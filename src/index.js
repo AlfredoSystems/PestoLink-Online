@@ -32,7 +32,7 @@ let selectedGamepadIndex = 0;
 
 // --------------------------- state management ------------------------------------ //
 
-if (localStorage.getItem(toggleMobile.id) == null) {
+if (localStorage.getItem(toggleMobile.id) === null) {
     if (isMobile) {
         localStorage.setItem(toggleMobile.id, 'true');
     } else {
@@ -41,7 +41,7 @@ if (localStorage.getItem(toggleMobile.id) == null) {
     updateMobileSlider(toggleMobile, false);
  }
 
- if (localStorage.getItem(toggleFocusZero.id) == null) {
+ if (localStorage.getItem(toggleFocusZero.id) === null) {
     localStorage.setItem(toggleFocusZero.id, 'true');
     updateSlider(toggleFocusZero, false);
  }
@@ -195,7 +195,7 @@ function setupGamepadSelection() {
     span.addEventListener('pointerdown', () => { modal.style.display = 'none'; });
 
     window.addEventListener('pointerdown', (event) => {
-        if (event.target == modal) modal.style.display = 'none';
+        if (event.target === modal) modal.style.display = 'none';
     });
 
     function populateGamepadList() {
@@ -238,13 +238,7 @@ function renderLoop() {
 
     const keyboardArray = keyboardAgent.getKeyboardArray()
 
-    for (let i = 0; i < 12; i++) {
-        if (keyboardArray.length > i) {
-            rawPacket[7 + i] = keyboardArray[i];
-        } else {
-            rawPacket[7 + i] = 0;
-        }
-    }
+    rawPacket.set(keyboardArray.slice(0, 12), 7);
 
     if (localStorage.getItem(toggleKeyboardWASD.id) === 'true') {
         for (let key of keyboardArray) {
@@ -312,6 +306,22 @@ function createBleAgent() {
     const CHARACTERISTIC_UUID_GAMEPAD = '452af57e-ad27-422c-88ae-76805ea641a9';
     const CHARACTERISTIC_UUID_TELEMETRY = '266d9d74-3e10-4fcd-88d2-cb63b5324d0c';
     const CHARACTERISTIC_UUID_TERMINAL = '433ec275-a494-40ab-98c2-4785a19bf830';
+
+    const BLE_GREEN = '#4dae50';
+    const BLE_RED = '#eb5b5b';
+    const BLE_STATUS = {
+        CONNECTING:    ['Connecting', 'black'],
+        NOT_CONNECTED: ['Not Connected', 'black'],
+        DISCONNECTING: ['Disconnecting', 'gray'],
+        CONNECTED:     ['Connected', BLE_GREEN],
+        TIMEOUT:       ['timeout?', 'black'],
+        NO_DEVICE:     ['No Device Selected', BLE_RED],
+        FAILED:        ['Connection failed', BLE_RED],
+        SECURITY_ERR:  ['Security error', BLE_RED],
+        PERM_DENIED:   ['Bluetooth permission denied', BLE_RED],
+        BT_OFF:        ['Bluetooth is off', BLE_RED],
+        ERROR:         ['Error', BLE_RED],
+    };
 
     buttonBLE.addEventListener('pointerdown', updateBLE);
     terminalClearButton.addEventListener('pointerdown', clearTerminal);
@@ -412,8 +422,8 @@ function createBleAgent() {
     // in the custom picker. No OS-level device dialog is shown.
     async function connectNative() {
         try {
-            if (nativeDeviceId == null) {
-                displayBleStatus('Connecting', 'black');
+            if (nativeDeviceId === null) {
+                displayBleStatus(...BLE_STATUS.CONNECTING);
                 if (!nativeBleClient) nativeBleClient = await getNativeBleClient();
 
                 const picked = await new Promise((resolve, reject) => {
@@ -454,7 +464,7 @@ function createBleAgent() {
                 });
 
                 if (!picked) {
-                    displayBleStatus('No Device Selected', '#eb5b5b');
+                    displayBleStatus(...BLE_STATUS.NO_DEVICE);
                     return;
                 }
                 nativeDeviceId = picked.deviceId;
@@ -475,19 +485,19 @@ function createBleAgent() {
 
             isConnectedBLE = true;
             buttonBLE.innerHTML = '❌';
-            displayBleStatus(`Connected to <br>${nativeDeviceName}`, '#4dae50');
+            displayBleStatus(`Connected to <br>${nativeDeviceName}`, BLE_GREEN);
 
         } catch (error) {
             const msg = error?.message ?? '';
             if (msg.includes('cancelled') || msg.includes('User cancelled')) {
-                displayBleStatus('No Device Selected', '#eb5b5b');
+                displayBleStatus(...BLE_STATUS.NO_DEVICE);
             } else if (msg.includes('permission') || msg.includes('Permission')) {
-                displayBleStatus('Bluetooth permission denied', '#eb5b5b');
+                displayBleStatus(...BLE_STATUS.PERM_DENIED);
             } else if (msg.includes('disabled') || msg.includes('Bluetooth is not enabled')) {
-                displayBleStatus('Bluetooth is off', '#eb5b5b');
+                displayBleStatus(...BLE_STATUS.BT_OFF);
             } else {
                 console.log(error);
-                displayBleStatus('Scan failed: ' + msg, '#eb5b5b');
+                displayBleStatus('Scan failed: ' + msg, BLE_RED);
             }
         }
     }
@@ -496,8 +506,8 @@ function createBleAgent() {
     // discovers devices, then resolve requestDevice() with the user's choice.
     async function connectElectron() {
         try {
-            if (device == null) {
-                displayBleStatus('Connecting', 'black');
+            if (device === null) {
+                displayBleStatus(...BLE_STATUS.CONNECTING);
                 openPickerModal('Searching for robots...');
 
                 window.electronBLE.onDeviceList((devices) => {
@@ -536,10 +546,10 @@ function createBleAgent() {
             window.electronBLE?.removeListeners();
             closePickerModal();
             if (error.name === 'NotFoundError') {
-                displayBleStatus('No Device Selected', '#eb5b5b');
+                displayBleStatus(...BLE_STATUS.NO_DEVICE);
             } else {
                 console.log(error);
-                displayBleStatus('Connection failed', '#eb5b5b');
+                displayBleStatus(...BLE_STATUS.FAILED);
             }
         }
     }
@@ -550,8 +560,8 @@ function createBleAgent() {
     // open the browser picker when they confirm.
     async function connectWebBluetooth() {
         try {
-            if (device == null){
-                displayBleStatus('Connecting', 'black');
+            if (device === null) {
+                displayBleStatus(...BLE_STATUS.CONNECTING);
                 device = await navigator.bluetooth.requestDevice({ filters: [{ services: [SERVICE_UUID_PESTOBLE] }] });
             } else {
                 displayBleStatus(`Reconnecting to <br>${device.name}`, 'black');
@@ -560,12 +570,12 @@ function createBleAgent() {
             await connectGATT();
         } catch (error) {
             if (error.name === 'NotFoundError') {
-                displayBleStatus('No Device Selected', '#eb5b5b');
+                displayBleStatus(...BLE_STATUS.NO_DEVICE);
             } else if (error.name === 'SecurityError') {
-                displayBleStatus('Security error', '#eb5b5b');
+                displayBleStatus(...BLE_STATUS.SECURITY_ERR);
             } else {
                 console.log(error);
-                displayBleStatus('Connection failed', '#eb5b5b');
+                displayBleStatus(...BLE_STATUS.FAILED);
             }
         }
     }
@@ -593,7 +603,7 @@ function createBleAgent() {
 
         isConnectedBLE = true;
         buttonBLE.innerHTML = '❌';
-        displayBleStatus(`Connected to <br>${device.name}`, '#4dae50');
+        displayBleStatus(`Connected to <br>${device.name}`, BLE_GREEN);
     }
 
     // Unified data handlers — accept a DataView directly (works for both paths).
@@ -638,14 +648,14 @@ function createBleAgent() {
             asciiString += String.fromCharCode(value.getUint8(i + 1));
         }
 
-        if (controlCharacter == 1) {
+        if (controlCharacter === 1) {
             const lines = terminalLog.innerHTML.split('<br>').filter(line => line !== '');
             lines.push(asciiString);
             while (lines.length > 7) lines.shift();
             terminalLog.innerHTML = lines.join('<br>');
         }
 
-        if (controlCharacter == 2) {
+        if (controlCharacter === 2) {
             terminalLog.innerHTML = '';
         }
     }
@@ -660,7 +670,7 @@ function createBleAgent() {
     }
 
     async function disconnectBLE() {
-        displayBleStatus('Disconnecting', 'gray');
+        displayBleStatus(...BLE_STATUS.DISCONNECTING);
         userDisconnecting = true;
         try {
             batteryWatchdogStop();
@@ -670,11 +680,11 @@ function createBleAgent() {
                 device.removeEventListener('gattserverdisconnected', robotDisconnect);
                 await device.gatt.disconnect();
             }
-            displayBleStatus('Not Connected', 'black');
+            displayBleStatus(...BLE_STATUS.NOT_CONNECTED);
             isConnectedBLE = false;
             buttonBLE.innerHTML = '🔗';
         } catch (error) {
-            displayBleStatus('Error', '#eb5b5b');
+            displayBleStatus(...BLE_STATUS.ERROR);
             console.error('Error:', error);
         } finally {
             userDisconnecting = false;
@@ -684,7 +694,7 @@ function createBleAgent() {
     function robotDisconnect() {
         if (userDisconnecting) return;
         batteryWatchdogStop();
-        displayBleStatus('Not Connected', 'black');
+        displayBleStatus(...BLE_STATUS.NOT_CONNECTED);
         isConnectedBLE = false;
         connectBLE();
     }
@@ -710,9 +720,9 @@ function createBleAgent() {
     let timer;
     const timeout = 1000;
     function batteryWatchdogReset() {
-        displayBleStatus('Connected', '#4dae50');
+        displayBleStatus(...BLE_STATUS.CONNECTED);
         if (timer) clearTimeout(timer);
-        timer = setTimeout(() => displayBleStatus('timeout?', 'black'), timeout);
+        timer = setTimeout(() => displayBleStatus(...BLE_STATUS.TIMEOUT), timeout);
     }
     function batteryWatchdogStop() {
         if (timer) { clearTimeout(timer); timer = null; }
@@ -798,7 +808,7 @@ function createMobileAxisAgent() {
         event.preventDefault();
         if (dragStart === null) return;
         for (let touch of event.changedTouches) {
-            if (touch.identifier == currentTouch.identifier) {
+            if (touch.identifier === currentTouch.identifier) {
                 stick.style.transform = `translate3d(0px, 0px, 0px)`;
                 dragStart = null;
                 currentTouch = null;
@@ -811,9 +821,9 @@ function createMobileAxisAgent() {
 
     function getScaledPos() {
         let yScaled = 127
-        if (currentPos.y != 0) yScaled = Math.round((currentPos.y / (parent.offsetWidth * maxDiffScale) + 1) * (255 / 2));
+        if (currentPos.y !== 0) yScaled = Math.round((currentPos.y / (parent.offsetWidth * maxDiffScale) + 1) * (255 / 2));
         let xScaled = 127
-        if (currentPos.x != 0) xScaled = Math.round((currentPos.x / (parent.offsetWidth * maxDiffScale) + 1) * (255 / 2));
+        if (currentPos.x !== 0) xScaled = Math.round((currentPos.x / (parent.offsetWidth * maxDiffScale) + 1) * (255 / 2));
         return { axis0: xScaled, axis1: yScaled, axis2: 127, axis3: 127 };
     }
 
@@ -821,7 +831,7 @@ function createMobileAxisAgent() {
 }
 
 function createMobileButtonAgent() {
-    var buttonStates = [0, 0, 0, 0];
+    let buttonStates = [0, 0, 0, 0];
 
     const buttons = [
         document.getElementById('button-0'),
@@ -850,7 +860,7 @@ function createMobileButtonAgent() {
     }
 
     function getButtonBytes() {
-        var buttonValMobile = 0;
+        let buttonValMobile = 0;
         for (let i = 0; i < buttonStates.length; i++) {
             if (buttonStates[i]) buttonValMobile |= (1 << i)
         }
@@ -868,13 +878,13 @@ function createGamepadAgent() {
         return navigator.getGamepads()[selectedGamepadIndex];
     }
 
-    var axisValueElements = document.querySelectorAll('[id^="axisValue"]');
-    var barElements = document.querySelectorAll('[id^="bar"]');
-    var buttonElements = document.querySelectorAll('[id^="buttonDesktop"]');
+    let axisValueElements = document.querySelectorAll('[id^="axisValue"]');
+    let barElements = document.querySelectorAll('[id^="bar"]');
+    let buttonElements = document.querySelectorAll('[id^="buttonDesktop"]');
 
     function convertUnitFloatToByte(unitFloat) {
         let byte = 127
-        if (unitFloat != 0) byte = Math.round((unitFloat + 1) * (255 / 2));
+        if (unitFloat !== 0) byte = Math.round((unitFloat + 1) * (255 / 2));
         return byte
     }
 
@@ -927,11 +937,11 @@ function createKeyboardAgent() {
     document.addEventListener('keyup', handleKeyboardInput);
 
     function handleKeyboardInput(event) {
-        if (event.repeat != true) keyEventQueue.push(event);
+        if (!event.repeat) keyEventQueue.push(event);
     }
 
-    var keyEventQueue = [];
-    var keyboardState = new Set();
+    let keyEventQueue = [];
+    let keyboardState = new Set();
 
     function getNumKeyboardState() {
         for (const event of keyEventQueue.splice(0)) {
