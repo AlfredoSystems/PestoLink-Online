@@ -128,8 +128,10 @@ function setupSettings() {
 }
 
 function applyTheme(value) {
-    if (value === 'system') document.documentElement.removeAttribute('data-theme');
-    else document.documentElement.setAttribute('data-theme', value);
+    const resolved = value === 'system'
+        ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+        : value;
+    document.documentElement.setAttribute('data-theme', resolved);
 }
 
 function setupGamepadSelection() {
@@ -718,8 +720,7 @@ function createBleAgent() {
 function createMobileAxisAgent() {
     let parent = document.getElementById('joystick-container');
     const maxDiffScale = 0.5;
-    const stick = document.createElement('div');
-    stick.classList.add('joystick');
+    const stick = parent.querySelector('.joystick');
 
     stick.addEventListener('mousedown', handleMouseDown);
     document.addEventListener('mousemove', handleMouseMove);
@@ -788,8 +789,6 @@ function createMobileAxisAgent() {
             }
         }
     }
-
-    parent.appendChild(stick);
 
     function getScaledPos() {
         let yScaled = 127

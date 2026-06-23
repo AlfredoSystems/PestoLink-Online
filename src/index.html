@@ -9,10 +9,14 @@
 
     <title>PestoLink-Online</title>
     <link rel="stylesheet" href="./styles.css">
-    <script>const _t=localStorage.getItem('color-theme');if(_t==='light'||_t==='dark')document.documentElement.setAttribute('data-theme',_t);</script>
+    <script>var _t=localStorage.getItem('color-theme')||'system';if(_t==='system')_t=window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';document.documentElement.setAttribute('data-theme',_t);</script>
 </head>
 
 <body>
+    <script>
+        if(localStorage.getItem('toggle-mobile-layout')==='true')document.body.classList.add('mobile-mode');
+        if(localStorage.getItem('toggle-terminal')==='true')document.body.classList.add('terminal-visible');
+    </script>
 
     <div id="ble-warning-banner">
         <div id="ble-warning-content">
@@ -29,7 +33,7 @@
     <div id="user-container">
         <div class="container mobile-only" id="mobile-joystick">
             <div id="joystick-background">
-                <div id="joystick-container"></div>
+                <div id="joystick-container"><div class="joystick"></div></div>
             </div>
         </div>
 

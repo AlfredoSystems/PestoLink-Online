@@ -1,3 +1,5 @@
+/* ---- tokens ---- */
+
 :root {
     --alf-green: #4dae50;
     --alf-beige: #efe4b0;
@@ -16,21 +18,21 @@
     --list-item-hover:      #777;
 }
 
-@media (prefers-color-scheme: dark) {
-    :root {
-        --bg-body:          #1a1a1a;
-        --bg-container:     #2d2d2d;
-        --bg-button:        #3d3d3d;
-        --bg-button-hover:  #505050;
-        --bg-button-active: #454545;
-        --bg-modal:         #2d2d2d;
-        --bg-settings:      #5a5a5a;
-        --bg-joystick:      #444;
-        --bg-slider-bar:    #3a5a7a;
-        --modal-divider:    #555;
-        --list-item-hover:  #4a4a4a;
-    }
+html[data-theme="dark"] {
+    --bg-body:          #1a1a1a;
+    --bg-container:     #2d2d2d;
+    --bg-button:        #3d3d3d;
+    --bg-button-hover:  #505050;
+    --bg-button-active: #454545;
+    --bg-modal:         #1c1c1c;
+    --bg-settings:      #5a5a5a;
+    --bg-joystick:      #444;
+    --bg-slider-bar:    #3a5a7a;
+    --modal-divider:    #555;
+    --list-item-hover:  #4a4a4a;
 }
+
+/* ---- reset & base ---- */
 
 html,
 body,
@@ -65,54 +67,14 @@ body {
     overscroll-behavior-y: none;
 }
 
-/* ---- BLE warning banner ---- */
+/* ---- layout ---- */
 
-#ble-warning-banner {
-    display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    background: #eb5b5b;
-    color: white;
-    padding: 10px 48px 10px 16px;
-    z-index: 200;
+#user-container {
+    display: flex;
+    justify-content: center;
     align-items: center;
-    gap: 8px;
-    font-size: 14px;
-    line-height: 1.5;
+    overscroll-behavior-y: none;
 }
-
-#ble-warning-content {
-    flex: 1;
-    text-align: center;
-}
-
-#ble-warning-detail {
-    display: block;
-    font-weight: normal;
-    opacity: 0.9;
-    font-size: 12px;
-}
-
-#ble-warning-close {
-    position: absolute;
-    right: 12px;
-    top: 50%;
-    transform: translateY(-50%);
-    background: none;
-    border: none;
-    color: white;
-    font-size: 24px;
-    cursor: pointer;
-    padding: 4px 8px;
-    line-height: 1;
-    width: auto;
-    height: auto;
-    font-weight: normal;
-}
-
-/* ---- end BLE warning banner ---- */
 
 .container {
     display: flex;
@@ -122,12 +84,257 @@ body {
     border-radius: 2vw;
 }
 
+#mobile-button,
+#mobile-joystick,
+#desktop-axis,
+#desktop-button {
+    width: 30vw;
+    height: 30vw;
+}
+
 .mobile-only { display: none; }
 .desktop-only { display: grid; }
 .desktop-only#gamepad-select-button { display: block; }
 
 body.mobile-mode .mobile-only { display: grid; }
 body.mobile-mode .desktop-only { display: none; }
+
+/* ---- floating buttons ---- */
+
+.floating-button {
+    position: absolute;
+    width: 5vw;
+    height: 5vw;
+    font-size: 3vw;
+    background-color: var(--bg-button);
+    border-radius: 1vw;
+    cursor: pointer;
+    color: #e6e5e5;
+    text-align: center;
+    transition: background-color 0.3s, transform 0.1s, box-shadow 0.3s;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+.floating-button:hover {
+    background-color: var(--bg-button-hover);
+}
+.floating-button:active {
+    transform: translateY(2px);
+}
+
+#refresh-button        { top: 1vw; left: 1vw; }
+#gamepad-select-button { top: 7vw; left: 1vw; }
+#settings-button       { top: 1vw; right: 1vw; }
+
+/* ---- interface panel ---- */
+
+#interface {
+    width: 22vw;
+    height: 30vw;
+    display: grid;
+    grid-template-rows: 1fr 1fr 2fr;
+    grid-template-columns: 1fr 1fr;
+    grid-gap: 1vw;
+    padding: 1vw;
+}
+
+#ble-button {
+    background-color: var(--bg-button);
+    border-radius: 1vw;
+    font-size: 4vw;
+    grid-row: 1;
+    grid-column: 1;
+    cursor: pointer;
+    border: none;
+    color: #e6e5e5;
+    text-align: center;
+    transition: background-color 0.3s, transform 0.1s, box-shadow 0.3s;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+#ble-button:hover {
+    background-color: var(--bg-button-hover);
+}
+#ble-button:active {
+    background-color: var(--bg-button-active);
+    transform: translateY(2px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+#ble-button:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+#telemetry {
+    background-color: var(--bg-settings);
+    color: white;
+    overflow: hidden;
+    border-radius: 1vw;
+    width: 12vw;
+    font-size: 2vw;
+    grid-row: 1;
+    grid-column: 2;
+}
+
+#ble-status {
+    background-color: black;
+    font-size: 2vw;
+    height: 6vw;
+    grid-row: 2;
+    grid-column: span 2;
+}
+
+#settings-grid {
+    display: grid;
+    height: 10vw;
+    padding: 0.5vw;
+    grid-column-gap: 0.5vw;
+    grid-template-columns: 2fr 1fr;
+    grid-column: span 2;
+    background-color: var(--bg-settings);
+    border-radius: 1vw;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+}
+
+.settings-label {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    font-size: 1.2vw;
+}
+
+.settings-toggle {
+    position: relative;
+    display: inline-block;
+    width: 5vw;
+    height: 3vw;
+    touch-action: manipulation;
+}
+
+.toggle-round {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: var(--bg-button);
+    border-radius: 3vw;
+}
+
+.toggle-nub {
+    position: absolute;
+    content: "";
+    height: 2vw;
+    width: 2vw;
+    left: 0.5vw;
+    bottom: 0.5vw;
+    background-color: white;
+    border-radius: 50%;
+}
+.toggle-round.active,
+body.mobile-mode #toggle-mobile-layout,
+body.terminal-visible #toggle-terminal {
+    background-color: var(--alf-green);
+}
+.toggle-round.active .toggle-nub,
+body.mobile-mode #toggle-mobile-layout .toggle-nub,
+body.terminal-visible #toggle-terminal .toggle-nub {
+    transform: translateX(2vw);
+}
+
+/* ---- mobile input ---- */
+
+#mobile-joystick {
+    justify-content: center;
+    align-items: center;
+}
+
+#joystick-background {
+    border-radius: 1vw;
+    background: var(--bg-joystick);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 14vw;
+    height: 14vw;
+}
+
+.joystick {
+    background: grey;
+    border-radius: 50%;
+    cursor: pointer;
+    height: 13vw;
+    width: 13vw;
+}
+
+#mobile-button {
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(3, 1fr);
+    padding: 2vw;
+}
+
+#button-3 { grid-column: 2; grid-row: 1; }
+#button-2 { grid-column: 1; grid-row: 2; }
+#button-1 { grid-column: 3; grid-row: 2; }
+#button-0 { grid-column: 2; grid-row: 3; }
+
+#mobile-button button {
+    font-size: 5vw;
+    background-color: var(--bg-settings);
+    transform: scale(1.3);
+    border-radius: 100%;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* ---- desktop input ---- */
+
+#desktop-axis {
+    padding: 1vw;
+    grid-row-gap: 1vw;
+    grid-column-gap: 0.5vw;
+    grid-template-rows: 1fr 1fr 1fr 1fr;
+    grid-template-columns: 1fr 1fr 1fr;
+}
+
+#desktop-axis div {
+    font-size: 2vw;
+    border: none;
+}
+
+.slider-non {
+    background-color: var(--bg-settings);
+    border-radius: 1vw;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.slider-bar {
+    border-radius: 1vw;
+    width: 12vw;
+    background: var(--bg-slider-bar);
+}
+
+#desktop-button {
+    padding: 1vw;
+    grid-gap: 0.5vw;
+    grid-template-rows: 1fr 1fr 1fr 1fr;
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+}
+
+#desktop-button button {
+    font-size: 2vw;
+    background: var(--bg-settings);
+    border: none;
+    border-radius: 1vw;
+}
+
+/* ---- terminal ---- */
 
 #terminal-container {
     display: none;
@@ -194,262 +401,55 @@ body.terminal-visible #hack-spacer { display: none; }
     height: 6vw;
 }
 
-#user-container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    overscroll-behavior-y: none;
-}
+/* ---- BLE warning banner ---- */
 
-#mobile-button,
-#mobile-joystick,
-#desktop-axis,
-#desktop-button {
-    width: 30vw;
-    height: 30vw;
-}
-
-#mobile-joystick {
-    justify-content: center;
-    align-items: center;
-}
-
-#mobile-button {
-    grid-template-columns: repeat(3, 1fr);
-    grid-template-rows: repeat(3, 1fr);
-    padding: 2vw;
-}
-
-#button-3 { grid-column: 2; grid-row: 1; }
-#button-2 { grid-column: 1; grid-row: 2; }
-#button-1 { grid-column: 3; grid-row: 2; }
-#button-0 { grid-column: 2; grid-row: 3; }
-
-#joystick-background {
-    border-radius: 1vw;
-    background: var(--bg-joystick);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    width: 14vw;
-    height: 14vw;
-}
-
-.joystick {
-    background: grey;
-    border-radius: 50%;
-    cursor: pointer;
-    height: 13vw;
-    width: 13vw;
-}
-
-#interface {
-    width: 22vw;
-    height: 30vw;
-    display: grid;
-    grid-template-rows: 1fr 1fr 2fr;
-    grid-template-columns: 1fr 1fr;
-    grid-gap: 1vw;
-    padding: 1vw;
-}
-
-#ble-button {
-    background-color: var(--bg-button);
-    border-radius: 1vw;
-    font-size: 4vw;
-    grid-row: 1;
-    grid-column: 1;
-    cursor: pointer;
-    border: none;
-    color: #e6e5e5;
-    text-align: center;
-    transition: background-color 0.3s, transform 0.1s, box-shadow 0.3s;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-}
-#ble-button:hover {
-    background-color: var(--bg-button-hover);
-}
-#ble-button:active {
-    background-color: var(--bg-button-active);
-    transform: translateY(2px);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-#ble-button:disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
-}
-
-#telemetry {
-    background-color: var(--bg-settings);
-    color: white;
-    overflow: hidden;
-    border-radius: 1vw;
-    width: 12vw;
-    font-size: 2vw;
-    grid-row: 1;
-    grid-column: 2;
-}
-
-#ble-status {
-    background-color: black;
-    font-size: 2vw;
-    height: 6vw;
-    grid-row: 2;
-    grid-column: span 2;
-}
-
-#github-link {
-    display: block;
-    padding: 10px 0;
-    font-size: 15px;
-    color: rgb(0, 195, 255);
-    text-decoration: none;
-}
-#app-version {
-    display: block;
-    font-size: 12px;
-    color: white;
-    padding-top: 4px;
-}
-
-#mobile-button button {
-    font-size: 5vw;
-    background-color: var(--bg-settings);
-    transform: scale(1.3);
-    border-radius: 100%;
-    cursor: pointer;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-
-#desktop-button {
-    padding: 1vw;
-    grid-gap: 0.5vw;
-    grid-template-rows: 1fr 1fr 1fr 1fr;
-    grid-template-columns: 1fr 1fr 1fr 1fr;
-}
-
-#desktop-button button {
-    font-size: 2vw;
-    background: var(--bg-settings);
-    border: none;
-    border-radius: 1vw;
-}
-
-#desktop-axis {
-    padding: 1vw;
-    grid-row-gap: 1vw;
-    grid-column-gap: 0.5vw;
-    grid-template-rows: 1fr 1fr 1fr 1fr;
-    grid-template-columns: 1fr 1fr 1fr;
-}
-
-#desktop-axis div {
-    font-size: 2vw;
-    border: none;
-}
-
-.slider-non {
-    background-color: var(--bg-settings);
-    border-radius: 1vw;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-
-.slider-bar {
-    border-radius: 1vw;
-    width: 12vw;
-    background: var(--bg-slider-bar);
-}
-
-#settings-grid {
-    display: grid;
-    height: 10vw;
-    padding: 0.5vw;
-    grid-column-gap: 0.5vw;
-    grid-template-columns: 2fr 1fr;
-    grid-column: span 2;
-    background-color: var(--bg-settings);
-    border-radius: 1vw;
-    justify-content: center;
-    align-items: center;
-    text-align: center;
-}
-
-.settings-label {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    text-align: center;
-    font-size: 1.2vw;
-}
-
-.settings-toggle {
-    position: relative;
-    display: inline-block;
-    width: 5vw;
-    height: 3vw;
-    touch-action: manipulation;
-}
-
-.toggle-round {
-    position: absolute;
-    cursor: pointer;
+#ble-warning-banner {
+    display: none;
+    position: fixed;
     top: 0;
     left: 0;
     right: 0;
-    bottom: 0;
-    background-color: var(--bg-button);
-    border-radius: 3vw;
+    background: #eb5b5b;
+    color: white;
+    padding: 10px 48px 10px 16px;
+    z-index: 200;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    line-height: 1.5;
 }
-
-.toggle-nub {
-    position: absolute;
-    content: "";
-    height: 2vw;
-    width: 2vw;
-    left: 0.5vw;
-    bottom: 0.5vw;
-    background-color: white;
-    border-radius: 50%;
-}
-.toggle-round.active {
-    background-color: var(--alf-green);
-}
-.toggle-round.active .toggle-nub {
-    transform: translateX(2vw);
-}
-
-.floating-button {
-    position: absolute;
-    width: 5vw;
-    height: 5vw;
-    font-size: 3vw;
-    background-color: var(--bg-button);
-    border-radius: 1vw;
-    cursor: pointer;
-    color: #e6e5e5;
-    text-align: center;
-    transition: background-color 0.3s, transform 0.1s, box-shadow 0.3s;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-}
-.floating-button:hover {
-    background-color: var(--bg-button-hover);
-}
-.floating-button:active {
-    transform: translateY(2px);
-}
-
-#refresh-button        { top: 1vw; left: 1vw; }
-#gamepad-select-button { top: 7vw; left: 1vw; }
-#settings-button       { top: 1vw; right: 1vw; }
-
-
-.modal { display: none; }
-.modal.open { display: flex; }
 #ble-warning-banner.open { display: flex; }
+
+#ble-warning-content {
+    flex: 1;
+    text-align: center;
+}
+
+#ble-warning-detail {
+    display: block;
+    font-weight: normal;
+    opacity: 0.9;
+    font-size: 12px;
+}
+
+#ble-warning-close {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: white;
+    font-size: 24px;
+    cursor: pointer;
+    padding: 4px 8px;
+    line-height: 1;
+    width: auto;
+    height: auto;
+    font-weight: normal;
+}
+
+/* ---- modals ---- */
 
 .modal {
     display: none;
@@ -464,6 +464,7 @@ body.terminal-visible #hack-spacer { display: none; }
     justify-content: center;
     align-items: center;
 }
+.modal.open { display: flex; }
 
 .modal-content {
     background-color: var(--bg-modal);
@@ -510,6 +511,7 @@ body.terminal-visible #hack-spacer { display: none; }
     margin: 10px 0;
 }
 
+/* ---- gamepad modal ---- */
 
 #gamepad-list li {
     padding: 8px;
@@ -567,9 +569,21 @@ body.terminal-visible #hack-spacer { display: none; }
     background-color: #3d9e40 !important;
 }
 
-/* ---- end BLE picker modal ---- */
+/* ---- settings modal ---- */
 
-/* ---- theme slider ---- */
+#github-link {
+    display: block;
+    padding: 10px 0;
+    font-size: 15px;
+    color: rgb(0, 195, 255);
+    text-decoration: none;
+}
+#app-version {
+    display: block;
+    font-size: 12px;
+    color: white;
+    padding-top: 4px;
+}
 
 .theme-slider {
     display: flex;
@@ -592,36 +606,4 @@ body.terminal-visible #hack-spacer { display: none; }
 
 .theme-option:hover:not(.active) {
     background-color: var(--bg-button-hover);
-}
-
-/* ---- end theme slider ---- */
-
-/* ---- data-theme overrides (beat the media query via specificity) ---- */
-
-html[data-theme="light"] {
-    --bg-body:          var(--alf-green);
-    --bg-container:     var(--alf-beige);
-    --bg-button:        rgb(189, 188, 188);
-    --bg-button-hover:  rgb(121, 121, 121);
-    --bg-button-active: rgb(159, 159, 159);
-    --bg-modal:         #808080;
-    --bg-settings:      #808080;
-    --bg-joystick:      white;
-    --bg-slider-bar:    rgb(141, 168, 204);
-    --modal-divider:    #555;
-    --list-item-hover:  #777;
-}
-
-html[data-theme="dark"] {
-    --bg-body:          #1a1a1a;
-    --bg-container:     #2d2d2d;
-    --bg-button:        #3d3d3d;
-    --bg-button-hover:  #505050;
-    --bg-button-active: #454545;
-    --bg-modal:         #2d2d2d;
-    --bg-settings:      #5a5a5a;
-    --bg-joystick:      #444;
-    --bg-slider-bar:    #3a5a7a;
-    --modal-divider:    #555;
-    --list-item-hover:  #4a4a4a;
 }
