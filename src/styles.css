@@ -55,7 +55,6 @@ a:visited {color: rgb(0, 195, 255);}
 a:hover {color: hotpink;}
 
 body {
-    box-sizing: border-box;
     background: var(--bg-body);
     display: flex;
     justify-content: center;
@@ -129,7 +128,6 @@ body {
 }
 
 #terminal-container {
-    box-sizing: border-box;
     position: relative;
     background: black;
     width: 84vw;
@@ -191,7 +189,6 @@ body {
 }
 
 #user-container {
-    box-sizing: border-box;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -214,8 +211,14 @@ body {
 #mobile-button {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(3, 1fr);
     padding: 2vw;
 }
+
+#button-3 { grid-column: 2; grid-row: 1; }
+#button-2 { grid-column: 1; grid-row: 2; }
+#button-1 { grid-column: 3; grid-row: 2; }
+#button-0 { grid-column: 2; grid-row: 3; }
 
 #joystick-background {
     border-radius: 1vw;
@@ -230,8 +233,6 @@ body {
 .joystick {
     background: grey;
     border-radius: 50%;
-    user-select: none;
-    -webkit-user-select: none;
     cursor: pointer;
     height: 13vw;
     width: 13vw;
@@ -289,7 +290,6 @@ body {
     font-size: 2vw;
     height: 6vw;
     grid-row: 2;
-    grid-column: 1;
     grid-column: span 2;
 }
 
@@ -300,10 +300,6 @@ body {
     color: rgb(0, 195, 255);
     text-decoration: none;
 }
-#github-link:hover {
-    color: hotpink;
-}
-
 #app-version {
     display: block;
     font-size: 12px;
@@ -417,76 +413,32 @@ body {
     border-radius: 50%;
 }
 
-#refresh-button {
+.floating-button {
     position: absolute;
-    top: 1vw;
-    left: 1vw;
     width: 5vw;
     height: 5vw;
     font-size: 3vw;
     background-color: var(--bg-button);
     border-radius: 1vw;
     cursor: pointer;
-    border: none;
     color: #e6e5e5;
     text-align: center;
     transition: background-color 0.3s, transform 0.1s, box-shadow 0.3s;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
-#refresh-button:hover {
+.floating-button:hover {
     background-color: var(--bg-button-hover);
 }
-#refresh-button:active {
+.floating-button:active {
     transform: translateY(2px);
 }
 
-#gamepad-select-button {
-    position: absolute;
-    top: 7vw;
-    left: 1vw;
-    width: 5vw;
-    height: 5vw;
-    font-size: 3vw;
-    background-color: var(--bg-button);
-    border-radius: 1vw;
-    cursor: pointer;
-    border: none;
-    color: #e6e5e5;
-    text-align: center;
-    transition: background-color 0.3s, transform 0.1s, box-shadow 0.3s;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-}
-#gamepad-select-button:hover {
-    background-color: var(--bg-button-hover);
-}
-#gamepad-select-button:active {
-    transform: translateY(2px);
-}
+#refresh-button        { top: 1vw; left: 1vw; }
+#gamepad-select-button { top: 7vw; left: 1vw; }
+#settings-button       { top: 1vw; right: 1vw; }
+
 .desktop-only#gamepad-select-button {
     display: block;
-}
-
-#settings-button {
-    position: absolute;
-    top: 1vw;
-    right: 1vw;
-    width: 5vw;
-    height: 5vw;
-    font-size: 3vw;
-    background-color: var(--bg-button);
-    border-radius: 1vw;
-    cursor: pointer;
-    border: none;
-    color: #e6e5e5;
-    text-align: center;
-    transition: background-color 0.3s, transform 0.1s, box-shadow 0.3s;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-}
-#settings-button:hover {
-    background-color: var(--bg-button-hover);
-}
-#settings-button:active {
-    transform: translateY(2px);
 }
 
 
@@ -658,7 +610,7 @@ html[data-theme="dark"] {
     --bg-button-hover:  #505050;
     --bg-button-active: #454545;
     --bg-modal:         #2d2d2d;
-    --bg-settings:      #3a3a3a;
+    --bg-settings:      #5a5a5a;
     --bg-joystick:      #444;
     --bg-slider-bar:    #3a5a7a;
     --modal-divider:    #555;
