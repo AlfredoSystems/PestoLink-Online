@@ -923,36 +923,14 @@ function createKeyboardAgent() {
     }
 
     var keyEventQueue = [];
-    var keyboardState = [];
+    var keyboardState = new Set();
 
     function getNumKeyboardState() {
-        let keyEventsForThisFrame = [];
-
-        for (let keyEvent of keyEventQueue) {
-            var keyAlreadyUsed = false
-            for (let usedEvent of keyEventsForThisFrame) {
-                if (keyEvent.key == usedEvent.key) keyAlreadyUsed = true
-            }
-            if (!keyAlreadyUsed) keyEventsForThisFrame.push(keyEvent);
+        for (const event of keyEventQueue.splice(0)) {
+            if (event.type === 'keydown') keyboardState.add(event.code);
+            else keyboardState.delete(event.code);
         }
-
-        for (let event of keyEventsForThisFrame) {
-            if (event.type === 'keydown') keyboardState.push(event.code);
-
-            if (event.type === 'keyup') {
-                let idx = keyboardState.indexOf(event.code);
-                if (idx !== -1) keyboardState.splice(idx, 1)
-                idx = keyboardState.indexOf(event.code);
-                if (idx !== -1) keyboardState.splice(idx, 1)
-            }
-
-            let idx = keyEventQueue.indexOf(event);
-            if (idx !== -1) keyEventQueue.splice(idx, 1);
-        }
-
-        let numState = []
-        for (let key of keyboardState) numState.push(keyToNum[key]);
-        return numState
+        return [...keyboardState].map(key => keyToNum[key]);
     }
 
     return { getKeyboardArray: getNumKeyboardState }
