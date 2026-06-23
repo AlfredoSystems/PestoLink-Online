@@ -5,11 +5,11 @@ ScreenOrientation.lock({ orientation: 'landscape' }).catch(() => {});
 
 let isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
 
-let bleAgent = createBleAgent();
-let keyboardAgent = createKeyboardAgent();
-let axisAgent = createMobileAxisAgent();
-let buttonAgent = createMobileButtonAgent();
-let gamepadAgent = createGamepadAgent();
+let bleAgent;
+let keyboardAgent;
+let axisAgent;
+let buttonAgent;
+let gamepadAgent;
 
 let axisCallback = null
 let buttonCallback = null
@@ -49,6 +49,12 @@ if (localStorage.getItem(toggleMobile.id) == null) {
  if(isMobile) for (let element of helpRow) element.style.display = "none";
 
 document.addEventListener('DOMContentLoaded', function () {
+    bleAgent = createBleAgent();
+    keyboardAgent = createKeyboardAgent();
+    axisAgent = createMobileAxisAgent();
+    buttonAgent = createMobileButtonAgent();
+    gamepadAgent = createGamepadAgent();
+
     document.getElementById('refresh-button').addEventListener('pointerdown', async () => {
         await bleAgent.cleanup();
         window.location.reload();
@@ -220,13 +226,15 @@ function renderLoop() {
 
     rawPacket[0] = 0x01;
 
-    rawPacket[1] = axisCallback().axis0
-    rawPacket[2] = axisCallback().axis1
-    rawPacket[3] = axisCallback().axis2
-    rawPacket[4] = axisCallback().axis3
+    const axes = axisCallback();
+    rawPacket[1] = axes.axis0;
+    rawPacket[2] = axes.axis1;
+    rawPacket[3] = axes.axis2;
+    rawPacket[4] = axes.axis3;
 
-    rawPacket[5] = buttonCallback().byte0
-    rawPacket[6] = buttonCallback().byte1
+    const buttons = buttonCallback();
+    rawPacket[5] = buttons.byte0;
+    rawPacket[6] = buttons.byte1;
 
     const keyboardArray = keyboardAgent.getKeyboardArray()
 
@@ -263,7 +271,7 @@ function renderLoop() {
 
     if (localStorage.getItem(toggleFocusZero.id) === 'true') {
         if (!document.hasFocus()) {
-            rawPacket.fill(0, 0, 20);
+            rawPacket.fill(0);
             rawPacket[0] = 1;
             rawPacket[1] = 127;
             rawPacket[2] = 127;
