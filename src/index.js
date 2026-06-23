@@ -14,6 +14,9 @@ let gamepadAgent;
 let axisCallback = null
 let buttonCallback = null
 
+let keyboardWASDEnabled = false;
+let focusZeroEnabled = false;
+
 
 let toggleMobile = document.getElementById('toggle-mobile-layout');
 let toggleKeyboardWASD = document.getElementById('toggle-keyboard-style');
@@ -93,7 +96,10 @@ function updateSlider(sliderElement, toggleState) {
     if (toggleState) {
         localStorage.setItem(sliderElement.id, localStorage.getItem(sliderElement.id) !== 'true');
     }
-    sliderElement.classList.toggle('active', localStorage.getItem(sliderElement.id) === 'true');
+    const isActive = localStorage.getItem(sliderElement.id) === 'true';
+    sliderElement.classList.toggle('active', isActive);
+    if (sliderElement === toggleKeyboardWASD) keyboardWASDEnabled = isActive;
+    if (sliderElement === toggleFocusZero) focusZeroEnabled = isActive;
 }
 
 function setupSettings() {
@@ -137,10 +143,8 @@ function setupGamepadSelection() {
     const focusToggle = document.getElementById('toggle-focus-zero');
     // pointerdown already registered in DOMContentLoaded — no duplicate needed here.
 
-    let gamepadModalOpen = false;
-
     window.addEventListener('gamepadconnected', () => {
-        if (gamepadModalOpen) populateGamepadList();
+        if (modal.classList.contains('open')) populateGamepadList();
     });
 
     window.addEventListener('gamepaddisconnected', (event) => {
@@ -148,24 +152,21 @@ function setupGamepadSelection() {
             const gamepads = navigator.getGamepads().filter(g => g && g.index !== event.gamepad.index);
             selectedGamepadIndex = gamepads.length > 0 ? gamepads[0].index : 0;
         }
-        if (gamepadModalOpen) populateGamepadList();
+        if (modal.classList.contains('open')) populateGamepadList();
     });
 
     btn.addEventListener('pointerdown', () => {
         populateGamepadList();
         modal.classList.add('open');
-        gamepadModalOpen = true;
     });
 
     span.addEventListener('pointerdown', () => {
         modal.classList.remove('open');
-        gamepadModalOpen = false;
     });
 
     window.addEventListener('pointerdown', (event) => {
         if (event.target === modal) {
             modal.classList.remove('open');
-            gamepadModalOpen = false;
         }
     });
 
@@ -178,7 +179,7 @@ function setupGamepadSelection() {
             gamepads.forEach(gamepad => {
                 const li = document.createElement('li');
                 li.textContent = `${gamepad.index}: ${gamepad.id}`;
-                li.addEventListener('pointerdown', () => { selectedGamepadIndex = gamepad.index; modal.classList.remove('open'); gamepadModalOpen = false; });
+                li.addEventListener('pointerdown', () => { selectedGamepadIndex = gamepad.index; modal.classList.remove('open'); });
                 gamepadList.appendChild(li);
             });
         }
@@ -211,7 +212,7 @@ function renderLoop() {
 
     rawPacket.set(keyboardArray.slice(0, 12), 7);
 
-    if (localStorage.getItem(toggleKeyboardWASD.id) === 'true') {
+    if (keyboardWASDEnabled) {
         for (let key of keyboardArray) {
             if (key === keyToNum["KeyA"]) rawPacket[1] = clampUint8(rawPacket[1] - 128);
             if (key === keyToNum["KeyD"]) rawPacket[1] = clampUint8(rawPacket[1] + 128);
@@ -234,7 +235,7 @@ function renderLoop() {
         }
     }
 
-    if (localStorage.getItem(toggleFocusZero.id) === 'true') {
+    if (focusZeroEnabled) {
         if (!document.hasFocus()) {
             rawPacket.fill(0);
             rawPacket[0] = 1;
