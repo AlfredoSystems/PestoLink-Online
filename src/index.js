@@ -840,7 +840,7 @@ function createMobileButtonAgent() {
             buttons[buttonNumber].style.backgroundColor = '#4dae50';
         } else {
             buttonStates[buttonNumber] = 0;
-            buttons[buttonNumber].style.backgroundColor = 'grey';
+            buttons[buttonNumber].style.backgroundColor = '';
         }
     }
 
@@ -898,7 +898,7 @@ function createGamepadAgent() {
             const buttonCount = Math.min(gamepad.buttons.length, 16);
             for (let i = 0; i < buttonCount; i++) {
                 const button = gamepad.buttons[i];
-                if (button && button.value > 0.5) buttonStates |= (1 << i);
+                if (button && button.pressed) buttonStates |= (1 << i);
                 if (buttonElements[i]) {
                     const newColor = button && button.pressed ? 'var(--alf-green)' : 'grey';
                     if (buttonElements[i].style.background !== newColor) {
