@@ -209,6 +209,8 @@ function setupGamepadSelection() {
 }
 // ----------------------------------------- main --------------------------------------- //
 
+function clampUint8(value) { return Math.max(0, Math.min(value, 255)) }
+
 function renderLoop() {
     //bytes 0: packet version
     //bytes 1-4: axes
@@ -235,8 +237,6 @@ function renderLoop() {
             rawPacket[7 + i] = 0;
         }
     }
-
-    function clampUint8(value) { return Math.max(0, Math.min(value, 255)) }
 
     if (localStorage.getItem(toggleKeyboardWASD.id) === 'true') {
         for (let key of keyboardArray) {
@@ -707,7 +707,6 @@ function createBleAgent() {
         timer = setTimeout(() => displayBleStatus('timeout?', 'black'), timeout);
     }
     function batteryWatchdogStop() {
-        batteryWatchdogReset();
         if (timer) { clearTimeout(timer); timer = null; }
     }
 
