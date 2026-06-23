@@ -14,13 +14,6 @@ let gamepadAgent;
 let axisCallback = null
 let buttonCallback = null
 
-let mobileElements = document.getElementsByClassName("mobile-only");
-let desktopElements = document.getElementsByClassName("desktop-only");
-
-let helpRow = document.getElementsByClassName("help-row");
-
-let terminalElement = document.getElementById("terminal-container");
-let hackSpacerElement = document.getElementById("hack-spacer");
 
 let toggleMobile = document.getElementById('toggle-mobile-layout');
 let toggleKeyboardWASD = document.getElementById('toggle-keyboard-style');
@@ -46,7 +39,6 @@ if (localStorage.getItem(toggleMobile.id) === null) {
     updateSlider(toggleFocusZero, false);
  }
 
- if(isMobile) for (let element of helpRow) element.style.display = "none";
 
 document.addEventListener('DOMContentLoaded', function () {
     bleAgent = createBleAgent();
@@ -82,56 +74,26 @@ document.addEventListener('DOMContentLoaded', function () {
     window.setInterval(renderLoop, 100);
 });
 
-function updateMobileSlider(sliderElement, toggleState){
+function updateMobileSlider(sliderElement, toggleState) {
     updateSlider(sliderElement, toggleState);
-
-    if (localStorage.getItem(toggleMobile.id) === 'true') {
-        for (let element of desktopElements) { element.style.display = "none"; }
-        for (let element of mobileElements) { element.style.display = "grid"; }
-        axisCallback = axisAgent.getAxes
-        buttonCallback = buttonAgent.getButtons
-    } else {
-        for (let element of mobileElements) { element.style.display = "none"; }
-        for (let element of desktopElements) { element.style.display = "grid"; }
-
-        axisCallback = gamepadAgent.getAxes
-        buttonCallback = gamepadAgent.getButtons
+    const mobile = localStorage.getItem(toggleMobile.id) === 'true';
+    document.body.classList.toggle('mobile-mode', mobile);
+    if (axisAgent && gamepadAgent) {
+        axisCallback = mobile ? axisAgent.getAxes : gamepadAgent.getAxes;
+        buttonCallback = mobile ? buttonAgent.getButtons : gamepadAgent.getButtons;
     }
 }
 
-function updateTerminalSlider(sliderElement, toggleState){
+function updateTerminalSlider(sliderElement, toggleState) {
     updateSlider(sliderElement, toggleState);
-
-    if (localStorage.getItem(toggleTerminal.id) === 'true') {
-        terminalElement.style.display = "grid";
-        hackSpacerElement.style.display = "none";
-    } else {
-        terminalElement.style.display = "none";
-        hackSpacerElement.style.display = "grid";
-    }
+    document.body.classList.toggle('terminal-visible', localStorage.getItem(toggleTerminal.id) === 'true');
 }
 
-function updateSlider(sliderElement, toggleState){
-    if(toggleState){
-        if ( localStorage.getItem(sliderElement.id) === 'true') {
-            localStorage.setItem(sliderElement.id, 'false');
-        } else {
-            localStorage.setItem(sliderElement.id, 'true');
-        }
+function updateSlider(sliderElement, toggleState) {
+    if (toggleState) {
+        localStorage.setItem(sliderElement.id, localStorage.getItem(sliderElement.id) !== 'true');
     }
-
-    if ( localStorage.getItem(sliderElement.id) === 'true') {
-        sliderElement.style.backgroundColor = 'var(--alf-green)';
-        sliderElement.firstElementChild.style.transform = 'translateX(2vw)';
-        sliderElement.firstElementChild.style.webkitTransform  = 'translateX(2vw)';
-        sliderElement.firstElementChild.style.msTransform = 'translateX(2vw)';
-
-    } else {
-        sliderElement.style.backgroundColor = 'rgb(189, 188, 188)';
-        sliderElement.firstElementChild.style.transform = 'none';
-        sliderElement.firstElementChild.style.webkitTransform  = 'none';
-        sliderElement.firstElementChild.style.msTransform = 'none';
-    }
+    sliderElement.classList.toggle('active', localStorage.getItem(sliderElement.id) === 'true');
 }
 
 function setupSettings() {
@@ -139,10 +101,10 @@ function setupSettings() {
     const btn = document.getElementById('settings-button');
     const closeBtn = document.getElementById('settings-close');
 
-    btn.addEventListener('pointerdown', () => { modal.style.display = 'flex'; });
-    closeBtn.addEventListener('pointerdown', () => { modal.style.display = 'none'; });
+    btn.addEventListener('pointerdown', () => { modal.classList.add('open'); });
+    closeBtn.addEventListener('pointerdown', () => { modal.classList.remove('open'); });
     modal.addEventListener('pointerdown', (e) => {
-        if (e.target === modal) modal.style.display = 'none';
+        if (e.target === modal) modal.classList.remove('open');
     });
 
     const options = modal.querySelectorAll('.theme-option');
@@ -175,8 +137,10 @@ function setupGamepadSelection() {
     const focusToggle = document.getElementById('toggle-focus-zero');
     // pointerdown already registered in DOMContentLoaded — no duplicate needed here.
 
+    let gamepadModalOpen = false;
+
     window.addEventListener('gamepadconnected', () => {
-        if (modal.style.display === 'flex') populateGamepadList();
+        if (gamepadModalOpen) populateGamepadList();
     });
 
     window.addEventListener('gamepaddisconnected', (event) => {
@@ -184,18 +148,25 @@ function setupGamepadSelection() {
             const gamepads = navigator.getGamepads().filter(g => g && g.index !== event.gamepad.index);
             selectedGamepadIndex = gamepads.length > 0 ? gamepads[0].index : 0;
         }
-        if (modal.style.display === 'flex') populateGamepadList();
+        if (gamepadModalOpen) populateGamepadList();
     });
 
     btn.addEventListener('pointerdown', () => {
         populateGamepadList();
-        modal.style.display = 'flex';
+        modal.classList.add('open');
+        gamepadModalOpen = true;
     });
 
-    span.addEventListener('pointerdown', () => { modal.style.display = 'none'; });
+    span.addEventListener('pointerdown', () => {
+        modal.classList.remove('open');
+        gamepadModalOpen = false;
+    });
 
     window.addEventListener('pointerdown', (event) => {
-        if (event.target === modal) modal.style.display = 'none';
+        if (event.target === modal) {
+            modal.classList.remove('open');
+            gamepadModalOpen = false;
+        }
     });
 
     function populateGamepadList() {
@@ -207,7 +178,7 @@ function setupGamepadSelection() {
             gamepads.forEach(gamepad => {
                 const li = document.createElement('li');
                 li.textContent = `${gamepad.index}: ${gamepad.id}`;
-                li.addEventListener('pointerdown', () => { selectedGamepadIndex = gamepad.index; modal.style.display = 'none'; });
+                li.addEventListener('pointerdown', () => { selectedGamepadIndex = gamepad.index; modal.classList.remove('open'); gamepadModalOpen = false; });
                 gamepadList.appendChild(li);
             });
         }
@@ -295,8 +266,8 @@ function createBleAgent() {
         const banner = document.getElementById('ble-warning-banner');
         document.getElementById('ble-warning-message').textContent = warning.message + ' ';
         document.getElementById('ble-warning-detail').textContent = warning.detail;
-        banner.style.display = 'flex';
-        document.getElementById('ble-warning-close').addEventListener('pointerdown', () => banner.style.display = 'none');
+        banner.classList.add('open');
+        document.getElementById('ble-warning-close').addEventListener('pointerdown', () => banner.classList.remove('open'));
         buttonBLE.disabled = true;
         statusBLE.innerHTML = 'BLE not supported';
         return { attemptSend: () => {} };
@@ -368,11 +339,11 @@ function createBleAgent() {
     function openPickerModal(statusText) {
         pickerList.innerHTML = '';
         pickerStatus.textContent = statusText;
-        pickerModal.style.display = 'flex';
+        pickerModal.classList.add('open');
     }
 
     function closePickerModal() {
-        pickerModal.style.display = 'none';
+        pickerModal.classList.remove('open');
         pickerCancelFn = null;
     }
 

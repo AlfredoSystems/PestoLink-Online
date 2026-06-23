@@ -122,12 +122,15 @@ body {
     border-radius: 2vw;
 }
 
-.desktop-only,
-.mobile-only{
-    display:none;
-}
+.mobile-only { display: none; }
+.desktop-only { display: grid; }
+.desktop-only#gamepad-select-button { display: block; }
+
+body.mobile-mode .mobile-only { display: grid; }
+body.mobile-mode .desktop-only { display: none; }
 
 #terminal-container {
+    display: none;
     position: relative;
     background: black;
     width: 84vw;
@@ -180,6 +183,9 @@ body {
     flex-direction: column-reverse;
 }
 
+body.terminal-visible #terminal-container { display: grid; }
+body.terminal-visible #hack-spacer { display: none; }
+
 #hack-spacer {
     display: grid;
     background: var(--bg-body);
@@ -209,7 +215,6 @@ body {
 }
 
 #mobile-button {
-    display: grid;
     grid-template-columns: repeat(3, 1fr);
     grid-template-rows: repeat(3, 1fr);
     padding: 2vw;
@@ -319,7 +324,6 @@ body {
 }
 
 #desktop-button {
-    display: grid;
     padding: 1vw;
     grid-gap: 0.5vw;
     grid-template-rows: 1fr 1fr 1fr 1fr;
@@ -334,7 +338,6 @@ body {
 }
 
 #desktop-axis {
-    display: grid;
     padding: 1vw;
     grid-row-gap: 1vw;
     grid-column-gap: 0.5vw;
@@ -412,6 +415,12 @@ body {
     background-color: white;
     border-radius: 50%;
 }
+.toggle-round.active {
+    background-color: var(--alf-green);
+}
+.toggle-round.active .toggle-nub {
+    transform: translateX(2vw);
+}
 
 .floating-button {
     position: absolute;
@@ -437,10 +446,10 @@ body {
 #gamepad-select-button { top: 7vw; left: 1vw; }
 #settings-button       { top: 1vw; right: 1vw; }
 
-.desktop-only#gamepad-select-button {
-    display: block;
-}
 
+.modal { display: none; }
+.modal.open { display: flex; }
+#ble-warning-banner.open { display: flex; }
 
 .modal {
     display: none;
