@@ -304,6 +304,13 @@ body {
     color: hotpink;
 }
 
+#app-version {
+    display: block;
+    font-size: 12px;
+    color: gray;
+    padding-top: 4px;
+}
+
 #mobile-button button {
     font-size: 5vw;
     background-color: var(--bg-settings);

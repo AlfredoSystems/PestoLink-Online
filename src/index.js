@@ -71,6 +71,7 @@ document.addEventListener('DOMContentLoaded', function () {
     toggleTerminal.addEventListener('pointerdown', updateTerminalSlider.bind(null, toggleTerminal, true));
     toggleFocusZero.addEventListener('pointerdown', updateSlider.bind(null, toggleFocusZero, true));
 
+    document.getElementById('app-version').textContent = 'build ' + (import.meta.env.VITE_BUILD_NUMBER ?? 'dev');
     setupSettings();
     window.setInterval(renderLoop, 100);
 });

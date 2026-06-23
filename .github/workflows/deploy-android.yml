@@ -38,7 +38,7 @@ jobs:
         run: npm ci
 
       - name: Build web assets
-        run: npm run build
+        run: VITE_BUILD_NUMBER=$(git rev-list --count HEAD) npm run build
 
       - name: Sync Capacitor
         run: npx cap sync android
