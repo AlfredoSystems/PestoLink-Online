@@ -1,26 +1,17 @@
 // BLE platform detection and native adapter.
 //
 // Returns one of:
-//   'native'               – running inside Capacitor (iOS or Android app)
-//   'web-bluetooth'        – Chrome/Edge on desktop or Android
-//   'unsupported-safari'   – Safari on any platform
-//   'unsupported-ios-pwa'  – iOS home-screen PWA (WebKit, no BLE)
-//   'unsupported-browser'  – any other browser without Web Bluetooth
+//   'native'             – running inside Capacitor (iOS or Android app)
+//   'electron'           – running inside Electron
+//   'web-bluetooth'      – Chrome/Edge on desktop or Android
+//   'unsupported-safari' – Safari on any platform
+//   'unsupported-browser'– any other browser without Web Bluetooth
 
 export function getBleMode() {
   if (window.Capacitor?.isNativePlatform()) return 'native';
   if (window.electronBLE) return 'electron';
 
-  const ua = navigator.userAgent;
-  // iPad on iOS 13+ reports as MacIntel with touch support
-  const isIOS =
-    /iPad|iPhone|iPod/.test(ua) ||
-    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-  const isSafari = /^((?!chrome|android).)*safari/i.test(ua);
-  const isPWA =
-    window.matchMedia('(display-mode: standalone)').matches ||
-    window.navigator.standalone === true;
-
+  const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
   if (isSafari) return 'unsupported-safari';
   if ('bluetooth' in navigator) return 'web-bluetooth';
   return 'unsupported-browser';

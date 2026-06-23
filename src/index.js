@@ -532,7 +532,6 @@ function createBleAgent() {
             } else {
                 console.log(error);
                 displayBleStatus('Connection failed', '#eb5b5b');
-                connectElectron();
             }
         }
     }
@@ -559,7 +558,6 @@ function createBleAgent() {
             } else {
                 console.log(error);
                 displayBleStatus('Connection failed', '#eb5b5b');
-                connectWebBluetooth();
             }
         }
     }
