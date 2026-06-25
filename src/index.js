@@ -11,9 +11,6 @@ let axisAgent;
 let buttonAgent;
 let gamepadAgent;
 
-let axisCallback = null
-let buttonCallback = null
-
 let keyboardWASDEnabled = false;
 let focusZeroEnabled = false;
 
@@ -23,7 +20,6 @@ let toggleKeyboardWASD = document.getElementById('toggle-keyboard-style');
 let toggleTerminal = document.getElementById('toggle-terminal');
 let toggleFocusZero = document.getElementById('toggle-focus-zero');
 
-let selectedGamepadIndex = 0;
 
 
 // --------------------------- state management ------------------------------------ //
@@ -44,11 +40,11 @@ if (localStorage.getItem(toggleMobile.id) === null) {
 
 
 document.addEventListener('DOMContentLoaded', function () {
-    bleAgent = createBleAgent();
+    gamepadAgent = createGamepadAgent();
+    bleAgent = createBleAgent(() => gamepadAgent.getSelectedGamepad());
     keyboardAgent = createKeyboardAgent();
     axisAgent = createMobileAxisAgent();
     buttonAgent = createMobileButtonAgent();
-    gamepadAgent = createGamepadAgent();
 
     document.getElementById('refresh-button').addEventListener('pointerdown', async () => {
         await bleAgent.cleanup();
@@ -79,12 +75,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
 function updateMobileSlider(sliderElement, toggleState) {
     updateSlider(sliderElement, toggleState);
-    const mobile = localStorage.getItem(toggleMobile.id) === 'true';
-    document.body.classList.toggle('mobile-mode', mobile);
-    if (axisAgent && gamepadAgent) {
-        axisCallback = mobile ? axisAgent.getAxes : gamepadAgent.getAxes;
-        buttonCallback = mobile ? buttonAgent.getButtons : gamepadAgent.getButtons;
-    }
+    document.body.classList.toggle('mobile-mode', localStorage.getItem(toggleMobile.id) === 'true');
 }
 
 function updateTerminalSlider(sliderElement, toggleState) {
@@ -142,18 +133,12 @@ function setupGamepadSelection() {
     const span = document.getElementsByClassName('close-button')[0];
     const gamepadList = document.getElementById('gamepad-list');
 
-    const focusToggle = document.getElementById('toggle-focus-zero');
-    // pointerdown already registered in DOMContentLoaded — no duplicate needed here.
-
     window.addEventListener('gamepadconnected', () => {
         if (modal.classList.contains('open')) populateGamepadList();
     });
 
     window.addEventListener('gamepaddisconnected', (event) => {
-        if (selectedGamepadIndex === event.gamepad.index) {
-            const gamepads = navigator.getGamepads().filter(g => g && g.index !== event.gamepad.index);
-            selectedGamepadIndex = gamepads.length > 0 ? gamepads[0].index : 0;
-        }
+        gamepadAgent.handleDisconnect(event.gamepad.index);
         if (modal.classList.contains('open')) populateGamepadList();
     });
 
@@ -181,7 +166,7 @@ function setupGamepadSelection() {
             gamepads.forEach(gamepad => {
                 const li = document.createElement('li');
                 li.textContent = `${gamepad.index}: ${gamepad.id}`;
-                li.addEventListener('pointerdown', () => { selectedGamepadIndex = gamepad.index; modal.classList.remove('open'); });
+                li.addEventListener('pointerdown', () => { gamepadAgent.setIndex(gamepad.index); modal.classList.remove('open'); });
                 gamepadList.appendChild(li);
             });
         }
@@ -200,13 +185,14 @@ function renderLoop() {
 
     rawPacket[0] = 0x01;
 
-    const axes = axisCallback();
+    const mobile = document.body.classList.contains('mobile-mode');
+    const axes = mobile ? axisAgent.getAxes() : gamepadAgent.getAxes();
     rawPacket[1] = axes.axis0;
     rawPacket[2] = axes.axis1;
     rawPacket[3] = axes.axis2;
     rawPacket[4] = axes.axis3;
 
-    const buttons = buttonCallback();
+    const buttons = mobile ? buttonAgent.getButtons() : gamepadAgent.getButtons();
     rawPacket[5] = buttons.byte0;
     rawPacket[6] = buttons.byte1;
 
@@ -253,7 +239,7 @@ function renderLoop() {
 
 // -------------------------------------------- bluetooth --------------------------------------- //
 
-function createBleAgent() {
+function createBleAgent(getGamepad) {
     const bleMode = getBleMode();
 
     let buttonBLE = document.getElementById('ble-button')
@@ -599,7 +585,7 @@ function createBleAgent() {
         }
 
         if (value.byteLength >= 12 && value.getUint8(11) === 1) {
-            const gamepad = navigator.getGamepads()[selectedGamepadIndex];
+            const gamepad = getGamepad();
             if (gamepad?.vibrationActuator) {
                 gamepad.vibrationActuator.playEffect("dual-rumble", {
                     startDelay: 0,
@@ -844,9 +830,25 @@ function createMobileButtonAgent() {
 // -------------------------------------------- desktop --------------------------------------- //
 
 function createGamepadAgent() {
+    let selectedGamepadIndex = 0;
 
     function getFirstGamepad() {
         return navigator.getGamepads()[selectedGamepadIndex];
+    }
+
+    function setIndex(i) {
+        selectedGamepadIndex = i;
+    }
+
+    function handleDisconnect(disconnectedIndex) {
+        if (selectedGamepadIndex === disconnectedIndex) {
+            const remaining = navigator.getGamepads().filter(g => g && g.index !== disconnectedIndex);
+            selectedGamepadIndex = remaining.length > 0 ? remaining[0].index : 0;
+        }
+    }
+
+    function getSelectedGamepad() {
+        return getFirstGamepad();
     }
 
     let axisValueElements = document.querySelectorAll('[id^="axisValue"]');
@@ -897,7 +899,7 @@ function createGamepadAgent() {
         return { byte0: buttonStates & 0xFF, byte1: (buttonStates >> 8) & 0xFF };
     }
 
-    return { getAxes: getGamepadAxes, getButtons: getButtonBytes }
+    return { getAxes: getGamepadAxes, getButtons: getButtonBytes, setIndex, handleDisconnect, getSelectedGamepad }
 }
 
 // -------------------------------------------- keyboard --------------------------------------- //

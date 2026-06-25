@@ -498,6 +498,7 @@ body.terminal-visible #hack-spacer { display: none; }
     justify-content: space-between;
     align-items: center;
     padding: 10px 0;
+    gap: 16px;
 }
 
 .modal-setting .settings-label {
