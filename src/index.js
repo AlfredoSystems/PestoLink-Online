@@ -855,6 +855,22 @@ function createGamepadAgent() {
     let barElements = document.querySelectorAll('[id^="bar"]');
     let buttonElements = document.querySelectorAll('[id^="buttonDesktop"]');
 
+    let manualButtonStates = 0;
+    for (let i = 0; i < buttonElements.length; i++) {
+        const el = buttonElements[i];
+        el.addEventListener('pointerdown', (e) => {
+            e.currentTarget.setPointerCapture(e.pointerId);
+            manualButtonStates |= (1 << i);
+            el.style.background = 'var(--alf-green)';
+        });
+        const release = () => {
+            manualButtonStates &= ~(1 << i);
+            el.style.background = 'grey';
+        };
+        el.addEventListener('pointerup', release);
+        el.addEventListener('pointercancel', release);
+    }
+
     function convertUnitFloatToByte(unitFloat) {
         let byte = 127
         if (unitFloat !== 0) byte = Math.round((unitFloat + 1) * (255 / 2));
@@ -880,19 +896,20 @@ function createGamepadAgent() {
 
     function getButtonBytes() {
         const gamepad = getFirstGamepad();
-        let buttonStates = 0;
+        let buttonStates = manualButtonStates;
 
         if (gamepad) {
             const buttonCount = Math.min(gamepad.buttons.length, 16);
             for (let i = 0; i < buttonCount; i++) {
-                const button = gamepad.buttons[i];
-                if (button && button.pressed) buttonStates |= (1 << i);
-                if (buttonElements[i]) {
-                    const newColor = button && button.pressed ? 'var(--alf-green)' : 'grey';
-                    if (buttonElements[i].style.background !== newColor) {
-                        buttonElements[i].style.background = newColor;
-                    }
-                }
+                if (gamepad.buttons[i]?.pressed) buttonStates |= (1 << i);
+            }
+        }
+
+        for (let i = 0; i < buttonElements.length; i++) {
+            const isActive = !!(buttonStates & (1 << i));
+            const newColor = isActive ? 'var(--alf-green)' : 'grey';
+            if (buttonElements[i].style.background !== newColor) {
+                buttonElements[i].style.background = newColor;
             }
         }
 
