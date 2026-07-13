@@ -963,6 +963,12 @@ function createSlidersCard(host) {
             display(value);
         }
 
+        // Tapping the value readout zeroes the axis.
+        valueDisplay.addEventListener('pointerdown', () => {
+            setPointerAxis(axis, 0);
+            display(0);
+        });
+
         track.addEventListener('pointerdown', (e) => {
             activePointer = e.pointerId;
             track.setPointerCapture(e.pointerId);

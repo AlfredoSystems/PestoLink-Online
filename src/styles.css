@@ -373,6 +373,7 @@ body.terminal-visible #toggle-terminal .toggle-nub {
     padding: 0.5vw 0;
     font-size: 2vw;
     text-align: center;
+    cursor: pointer;
 }
 
 .slider-center {
