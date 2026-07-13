@@ -7,8 +7,7 @@ let isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.
 
 let bleAgent;
 let keyboardAgent;
-let axisAgent;
-let buttonAgent;
+let cardPanels;
 let gamepadAgent;
 
 let keyboardWASDEnabled = false;
@@ -43,8 +42,7 @@ document.addEventListener('DOMContentLoaded', function () {
     gamepadAgent = createGamepadAgent();
     bleAgent = createBleAgent(() => gamepadAgent.getSelectedGamepad());
     keyboardAgent = createKeyboardAgent();
-    axisAgent = createMobileAxisAgent();
-    buttonAgent = createMobileButtonAgent();
+    cardPanels = createCardPanels();
 
     document.getElementById('refresh-button').addEventListener('pointerdown', async () => {
         await bleAgent.cleanup();
@@ -70,12 +68,21 @@ document.addEventListener('DOMContentLoaded', function () {
 
     document.getElementById('app-version').textContent = 'build ' + (import.meta.env.VITE_BUILD_NUMBER ?? 'dev');
     setupSettings();
+    setupCardSelectors();
     window.setInterval(renderLoop, 100);
+
+    // Repaint cards every animation frame so state changes on one card show
+    // up on the others without waiting for the 10 Hz packet loop.
+    (function displayLoop() {
+        cardPanels.getFrame();
+        requestAnimationFrame(displayLoop);
+    })();
 });
 
 function updateMobileSlider(sliderElement, toggleState) {
     updateSlider(sliderElement, toggleState);
     document.body.classList.toggle('mobile-mode', localStorage.getItem(toggleMobile.id) === 'true');
+    cardPanels?.rebuild();
 }
 
 function updateTerminalSlider(sliderElement, toggleState) {
@@ -176,6 +183,12 @@ function setupGamepadSelection() {
 
 function clampUint8(value) { return Math.max(0, Math.min(value, 255)) }
 
+function convertUnitFloatToByte(unitFloat) {
+    let byte = 127
+    if (unitFloat !== 0) byte = Math.round((unitFloat + 1) * (255 / 2));
+    return byte
+}
+
 function renderLoop() {
     //bytes 0: packet version
     //bytes 1-4: axes
@@ -185,16 +198,13 @@ function renderLoop() {
 
     rawPacket[0] = 0x01;
 
-    const mobile = document.body.classList.contains('mobile-mode');
-    const axes = mobile ? axisAgent.getAxes() : gamepadAgent.getAxes();
-    rawPacket[1] = axes.axis0;
-    rawPacket[2] = axes.axis1;
-    rawPacket[3] = axes.axis2;
-    rawPacket[4] = axes.axis3;
-
-    const buttons = mobile ? buttonAgent.getButtons() : gamepadAgent.getButtons();
-    rawPacket[5] = buttons.byte0;
-    rawPacket[6] = buttons.byte1;
+    const frame = cardPanels.getFrame();
+    rawPacket[1] = convertUnitFloatToByte(frame.axes[0]);
+    rawPacket[2] = convertUnitFloatToByte(frame.axes[1]);
+    rawPacket[3] = convertUnitFloatToByte(frame.axes[2]);
+    rawPacket[4] = convertUnitFloatToByte(frame.axes[3]);
+    rawPacket[5] = frame.buttons & 0xFF;
+    rawPacket[6] = (frame.buttons >> 8) & 0xFF;
 
     const keyboardArray = keyboardAgent.getKeyboardArray()
 
@@ -701,138 +711,322 @@ function createBleAgent(getGamepad) {
     };
 }
 
-// -------------------------------------------- mobile --------------------------------------- //
+// -------------------------------------------- input state --------------------------------------- //
 
-function createMobileAxisAgent() {
-    let parent = document.getElementById('joystick-container');
-    const maxDiffScale = 0.5;
-    const stick = parent.querySelector('.joystick');
+// Axis values written by pointer interactions. Sliders hold their value;
+// joysticks spring back by writing 0 on release. Whichever card wrote last
+// wins. The gamepad is read fresh each frame; while a gamepad axis is
+// active (outside the deadzone) it takes over that axis and clears the
+// held pointer value, so everything reads 0 when the gamepad recenters.
+const GAMEPAD_DEADZONE = 0.05;
+const pointerAxes = [0, 0, 0, 0];
 
-    stick.addEventListener('mousedown', handleMouseDown);
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
-
-    stick.addEventListener('touchstart', handleTouchDown, { passive: false });
-    document.addEventListener('touchmove', handleTouchMove, { passive: false });
-    document.addEventListener('touchend', handleTouchUp, { passive: false });
-
-    stick.style.transition = '0s';
-
-    let dragStart = null;
-    let currentTouch = null;
-    let currentPos = { x: 0, y: 0 };
-
-    function handleMouseDown(event) {
-        dragStart = { x: event.clientX, y: event.clientY };
-    }
-
-    function handleTouchDown(event) {
-        event.preventDefault();
-        dragStart = { x: event.changedTouches[0].clientX, y: event.changedTouches[0].clientY };
-        currentTouch = event.changedTouches[0];
-    }
-
-    function handleMouseMove(event) {
-        if (dragStart === null) return;
-        moveStick(event.clientX, event.clientY);
-    }
-
-    function handleTouchMove(event) {
-        event.preventDefault();
-        if (dragStart === null) return;
-        for (let touch of event.changedTouches) {
-            if (touch.identifier === currentTouch.identifier) {
-                moveStick(touch.clientX, touch.clientY);
-            }
-        }
-    }
-
-    function moveStick(deltaX, deltaY) {
-        const xDiff = deltaX - dragStart.x;
-        const yDiff = deltaY - dragStart.y;
-        const xNew = Math.sign(xDiff) * Math.min(parent.offsetWidth * maxDiffScale, Math.sign(xDiff) * xDiff);
-        const yNew = Math.sign(yDiff) * Math.min(parent.offsetWidth * maxDiffScale, Math.sign(yDiff) * yDiff);
-        stick.style.transform = `translate3d(${xNew}px, ${yNew}px, 0px)`;
-        currentPos = { x: xNew, y: yNew };
-    }
-
-    function handleMouseUp() {
-        if (dragStart === null) return;
-        stick.style.transform = `translate3d(0px, 0px, 0px)`;
-        dragStart = null;
-        currentPos = { x: 0, y: 0 };
-    }
-
-    function handleTouchUp(event) {
-        event.preventDefault();
-        if (dragStart === null) return;
-        for (let touch of event.changedTouches) {
-            if (touch.identifier === currentTouch.identifier) {
-                stick.style.transform = `translate3d(0px, 0px, 0px)`;
-                dragStart = null;
-                currentTouch = null;
-                currentPos = { x: 0, y: 0 };
-            }
-        }
-    }
-
-    function getScaledPos() {
-        let yScaled = 127
-        if (currentPos.y !== 0) yScaled = Math.round((currentPos.y / (parent.offsetWidth * maxDiffScale) + 1) * (255 / 2));
-        let xScaled = 127
-        if (currentPos.x !== 0) xScaled = Math.round((currentPos.x / (parent.offsetWidth * maxDiffScale) + 1) * (255 / 2));
-        return { axis0: xScaled, axis1: yScaled, axis2: 127, axis3: 127 };
-    }
-
-    return { getAxes: getScaledPos };
+function setPointerAxis(axis, value) {
+    pointerAxes[axis] = value;
 }
 
-function createMobileButtonAgent() {
-    let buttonStates = [0, 0, 0, 0];
+// -------------------------------------------- cards --------------------------------------- //
 
-    const buttons = [
-        document.getElementById('button-0'),
-        document.getElementById('button-1'),
-        document.getElementById('button-2'),
-        document.getElementById('button-3')
-    ];
+// Cards are views of the shared input state. Pointer interactions write to
+// pointerAxes or a per-card held-button mask; each frame getFrame() merges
+// pointer and gamepad state, and every card repaints from the merged result
+// via update(axes, buttons) — so cards sharing an axis or button stay in sync.
+// The user's card selection applies to the mobile layout; with the mobile
+// layout toggle off, both panels are overridden with the gamepad cards.
 
-    for (let i = 0; i < buttons.length; i++) {
-        buttons[i].addEventListener('pointerdown', (e) => {
-            e.currentTarget.setPointerCapture(e.pointerId);
-            handleButton(i, true);
+const CARD_TYPES = {
+    'joystick-01':     { label: 'Joystick (axes 0, 1)',    create: (host) => createJoystickCard(host, 0, 1) },
+    'joystick-23':     { label: 'Joystick (axes 2, 3)',    create: (host) => createJoystickCard(host, 2, 3) },
+    'buttons-03':      { label: 'Buttons (0-3)',          create: (host) => createButtonsCard(host, 0) },
+    'buttons-47':      { label: 'Buttons (4-7)',          create: (host) => createButtonsCard(host, 4) },
+    'dpad':            { label: 'D-pad (buttons 12-15)',  create: createDpadCard },
+    'sliders':         { label: 'Sliders (axes 0-3)',     create: createSlidersCard },
+    'gamepad-axes':    { label: 'Axes display',    create: createGamepadAxesCard },
+    'gamepad-buttons': { label: 'Buttons (0-15)',  create: createGamepadButtonsCard },
+};
+
+const PANEL_DEFAULTS = { 'card-left': 'joystick-01', 'card-right': 'buttons-03' };
+const DESKTOP_CARDS = { 'card-left': 'gamepad-axes', 'card-right': 'gamepad-buttons' };
+
+function getPanelCardType(panelKey) {
+    const saved = localStorage.getItem(panelKey);
+    return Object.hasOwn(CARD_TYPES, saved) ? saved : PANEL_DEFAULTS[panelKey];
+}
+
+function createCardPanels() {
+    const hosts = {
+        'card-left': document.getElementById('left-panel'),
+        'card-right': document.getElementById('right-panel'),
+    };
+    let cards = [];
+
+    function rebuild() {
+        const mobile = document.body.classList.contains('mobile-mode');
+        cards = Object.entries(hosts).map(([panelKey, host]) => {
+            host.innerHTML = '';
+            const cardType = mobile ? getPanelCardType(panelKey) : DESKTOP_CARDS[panelKey];
+            return CARD_TYPES[cardType].create(host);
         });
-        buttons[i].addEventListener('pointerup', handleButton.bind(null, i, false));
-        buttons[i].addEventListener('pointercancel', handleButton.bind(null, i, false));
+        getFrame(); // paint fresh cards from the current input state
     }
+    rebuild();
 
-    function handleButton(buttonNumber, buttonState) {
-        if (buttonState) {
-            buttonStates[buttonNumber] = 1;
-            buttons[buttonNumber].style.backgroundColor = '#4dae50';
-        } else {
-            buttonStates[buttonNumber] = 0;
-            buttons[buttonNumber].style.backgroundColor = '';
+    function getFrame() {
+        const gamepad = gamepadAgent.getSelectedGamepad();
+
+        const axes = [0, 0, 0, 0];
+        for (let i = 0; i < 4; i++) {
+            const gamepadAxis = gamepad?.axes[i] ?? 0;
+            if (Math.abs(gamepadAxis) > GAMEPAD_DEADZONE) {
+                pointerAxes[i] = 0; // gamepad takeover discards the held pointer value
+                axes[i] = gamepadAxis;
+            } else {
+                axes[i] = pointerAxes[i];
+            }
         }
-    }
 
-    function getButtonBytes() {
-        let buttonValMobile = 0;
-        for (let i = 0; i < buttonStates.length; i++) {
-            if (buttonStates[i]) buttonValMobile |= (1 << i)
+        let buttons = 0;
+        for (const card of cards) buttons |= card.heldButtons?.() ?? 0;
+        if (gamepad) {
+            const buttonCount = Math.min(gamepad.buttons.length, 16);
+            for (let i = 0; i < buttonCount; i++) {
+                if (gamepad.buttons[i]?.pressed) buttons |= (1 << i);
+            }
         }
-        return { byte0: buttonValMobile, byte1: 0 }
+
+        for (const card of cards) card.update?.(axes, buttons);
+        return { axes, buttons };
     }
 
-    return { getButtons: getButtonBytes }
+    return { rebuild, getFrame };
 }
 
-// -------------------------------------------- desktop --------------------------------------- //
+function setupCardSelectors() {
+    for (const panelKey of Object.keys(PANEL_DEFAULTS)) {
+        const select = document.getElementById('select-' + panelKey);
+        for (const [value, { label }] of Object.entries(CARD_TYPES)) {
+            const option = document.createElement('option');
+            option.value = value;
+            option.textContent = label;
+            select.appendChild(option);
+        }
+        select.value = getPanelCardType(panelKey);
+        select.addEventListener('change', () => {
+            localStorage.setItem(panelKey, select.value);
+            cardPanels.rebuild();
+        });
+    }
+}
+
+function createJoystickCard(host, axisX, axisY) {
+    host.insertAdjacentHTML('beforeend', `
+        <div class="card joystick-card">
+            <div class="card-label joystick-label-x">&minus;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Axis ${axisX}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;+</div>
+            <div class="card-label joystick-label-y">&minus;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Axis ${axisY}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;+</div>
+            <div class="joystick-background">
+                <div class="joystick-container"><div class="joystick"></div></div>
+            </div>
+        </div>`);
+    const container = host.querySelector('.joystick-container');
+    const stick = host.querySelector('.joystick');
+    const maxDiffScale = 0.5;
+
+    let activePointer = null;
+    let dragStart = null;
+
+    function moveStick(xUnit, yUnit) {
+        const maxDiff = container.offsetWidth * maxDiffScale;
+        stick.style.transform = `translate3d(${xUnit * maxDiff}px, ${yUnit * maxDiff}px, 0px)`;
+    }
+
+    function writeAxes(xUnit, yUnit) {
+        setPointerAxis(axisX, xUnit);
+        setPointerAxis(axisY, yUnit);
+        moveStick(xUnit, yUnit);
+    }
+
+    stick.addEventListener('pointerdown', (e) => {
+        if (activePointer !== null) return;
+        activePointer = e.pointerId;
+        stick.setPointerCapture(e.pointerId);
+        dragStart = { x: e.clientX, y: e.clientY };
+    });
+
+    stick.addEventListener('pointermove', (e) => {
+        if (e.pointerId !== activePointer) return;
+        const maxDiff = container.offsetWidth * maxDiffScale;
+        const clampUnit = (d) => Math.max(-1, Math.min(1, d / maxDiff));
+        writeAxes(clampUnit(e.clientX - dragStart.x), clampUnit(e.clientY - dragStart.y));
+    });
+
+    function release(e) {
+        if (e.pointerId !== activePointer) return;
+        activePointer = null;
+        dragStart = null;
+        writeAxes(0, 0); // spring back
+    }
+    stick.addEventListener('pointerup', release);
+    stick.addEventListener('pointercancel', release);
+
+    function update(axes) {
+        if (activePointer === null) moveStick(axes[axisX], axes[axisY]);
+    }
+
+    return { update };
+}
+
+// Wires pointer handlers so each button holds its data-bit while pressed.
+// The pressed class is set immediately for instant feedback, then kept in
+// sync with the merged button state (pointer and gamepad) via update().
+function bindMomentaryButtons(buttonElements) {
+    const buttons = [...buttonElements].map(el => ({ el, bit: 1 << Number(el.dataset.bit) }));
+    let mask = 0;
+    for (const { el, bit } of buttons) {
+        el.addEventListener('pointerdown', (e) => {
+            e.currentTarget.setPointerCapture(e.pointerId);
+            mask |= bit;
+            el.classList.add('pressed');
+        });
+        const release = () => {
+            mask &= ~bit;
+            el.classList.remove('pressed');
+        };
+        el.addEventListener('pointerup', release);
+        el.addEventListener('pointercancel', release);
+    }
+
+    function update(axes, buttonMask) {
+        for (const { el, bit } of buttons) {
+            el.classList.toggle('pressed', !!(buttonMask & bit));
+        }
+    }
+
+    return { heldButtons: () => mask, update };
+}
+
+function createButtonsCard(host, firstBit) {
+    host.insertAdjacentHTML('beforeend', `
+        <div class="card buttons-card">
+            <button data-bit="${firstBit + 3}" class="pos-top">${firstBit + 3}</button>
+            <button data-bit="${firstBit + 2}" class="pos-left">${firstBit + 2}</button>
+            <button data-bit="${firstBit + 1}" class="pos-right">${firstBit + 1}</button>
+            <button data-bit="${firstBit}" class="pos-bottom">${firstBit}</button>
+        </div>`);
+    return bindMomentaryButtons(host.querySelectorAll('button'));
+}
+
+// Maps to the standard gamepad D-pad bits: 12 up, 13 down, 14 left, 15 right.
+function createDpadCard(host) {
+    host.insertAdjacentHTML('beforeend', `
+        <div class="card dpad-card">
+            <button data-bit="12" class="pos-top">▲<span class="dpad-num">12</span></button>
+            <button data-bit="14" class="pos-left">◀<span class="dpad-num">14</span></button>
+            <button data-bit="15" class="pos-right"><span class="dpad-num">15</span>▶</button>
+            <button data-bit="13" class="pos-bottom"><span class="dpad-num">13</span>▼</button>
+        </div>`);
+    return bindMomentaryButtons(host.querySelectorAll('button'));
+}
+
+// Four vertical sliders, one per axis. They hold their position when
+// released (no spring back). Top of the track is +1, bottom is -1.
+function createSlidersCard(host) {
+    host.insertAdjacentHTML('beforeend', `
+        <div class="card sliders-card">
+            ${[0, 1, 2, 3].map(i => `
+            <div class="slider-column" data-axis="${i}">
+                <div class="slider-track">
+                    <div class="slider-center"></div>
+                    <div class="slider-thumb">${i}</div>
+                </div>
+                <div class="slider-value">0.00</div>
+            </div>`).join('')}
+        </div>`);
+
+    const sliders = [...host.querySelectorAll('.slider-column')].map(column => {
+        const axis = Number(column.dataset.axis);
+        const track = column.querySelector('.slider-track');
+        const thumb = column.querySelector('.slider-thumb');
+        const valueDisplay = column.querySelector('.slider-value');
+        let activePointer = null;
+
+        function display(value) {
+            const frac = (1 - value) / 2;
+            thumb.style.top = `${frac * 85}%`; // thumb is 15% tall, so travel spans 85%
+            valueDisplay.textContent = value.toFixed(2);
+        }
+
+        function setFromPointer(e) {
+            const rect = track.getBoundingClientRect();
+            const frac = Math.max(0, Math.min(1, (e.clientY - rect.top) / rect.height));
+            const value = 1 - 2 * frac;
+            setPointerAxis(axis, value);
+            display(value);
+        }
+
+        track.addEventListener('pointerdown', (e) => {
+            activePointer = e.pointerId;
+            track.setPointerCapture(e.pointerId);
+            setFromPointer(e);
+        });
+        track.addEventListener('pointermove', (e) => {
+            if (e.pointerId === activePointer) setFromPointer(e);
+        });
+        const release = (e) => {
+            if (e.pointerId === activePointer) activePointer = null;
+        };
+        track.addEventListener('pointerup', release);
+        track.addEventListener('pointercancel', release);
+
+        return { axis, display, isDragging: () => activePointer !== null };
+    });
+
+    function update(axes) {
+        for (const slider of sliders) {
+            if (!slider.isDragging()) slider.display(axes[slider.axis]);
+        }
+    }
+
+    return { update };
+}
+
+// Read-only display of the four merged axis values (what gets sent).
+function createGamepadAxesCard(host) {
+    host.insertAdjacentHTML('beforeend', `
+        <div class="card gamepad-axes-card">
+            ${[0, 1, 2, 3].map(i => `
+            <div class="slider-non">Axis ${i}</div>
+            <div class="slider-non axis-value">0.00</div>
+            <div class="slider-bar"></div>`).join('')}
+        </div>`);
+    const valueElements = host.querySelectorAll('.axis-value');
+    const barElements = host.querySelectorAll('.slider-bar');
+
+    function update(axes) {
+        for (let i = 0; i < 4; i++) {
+            valueElements[i].textContent = axes[i].toFixed(2);
+            const percentage = Math.round((axes[i] + 1) * (100 / 2));
+            barElements[i].style.background = `linear-gradient(to right, var(--alf-green) ${percentage}%, grey 0%)`;
+        }
+    }
+
+    return { update };
+}
+
+// All 16 buttons in one grid; pressable, and lights up with the merged state.
+function createGamepadButtonsCard(host) {
+    host.insertAdjacentHTML('beforeend', `
+        <div class="card gamepad-buttons-card">
+            ${Array.from({ length: 16 }, (_, i) => `<button data-bit="${i}">${i}</button>`).join('')}
+        </div>`);
+    return bindMomentaryButtons(host.querySelectorAll('button'));
+}
+
+// -------------------------------------------- gamepad selection --------------------------------------- //
 
 function createGamepadAgent() {
     let selectedGamepadIndex = 0;
 
-    function getFirstGamepad() {
+    function getSelectedGamepad() {
         return navigator.getGamepads()[selectedGamepadIndex];
     }
 
@@ -847,76 +1041,7 @@ function createGamepadAgent() {
         }
     }
 
-    function getSelectedGamepad() {
-        return getFirstGamepad();
-    }
-
-    let axisValueElements = document.querySelectorAll('[id^="axisValue"]');
-    let barElements = document.querySelectorAll('[id^="bar"]');
-    let buttonElements = document.querySelectorAll('[id^="buttonDesktop"]');
-
-    let manualButtonStates = 0;
-    for (let i = 0; i < buttonElements.length; i++) {
-        const el = buttonElements[i];
-        el.addEventListener('pointerdown', (e) => {
-            e.currentTarget.setPointerCapture(e.pointerId);
-            manualButtonStates |= (1 << i);
-            el.style.background = 'var(--alf-green)';
-        });
-        const release = () => {
-            manualButtonStates &= ~(1 << i);
-            el.style.background = 'grey';
-        };
-        el.addEventListener('pointerup', release);
-        el.addEventListener('pointercancel', release);
-    }
-
-    function convertUnitFloatToByte(unitFloat) {
-        let byte = 127
-        if (unitFloat !== 0) byte = Math.round((unitFloat + 1) * (255 / 2));
-        return byte
-    }
-
-    let axisArray = []
-    function getGamepadAxes() {
-        let gamepad = getFirstGamepad();
-        if (gamepad) {
-            for (let i = 0; i < 4; i++) {
-                let axisValGamepad = convertUnitFloatToByte(gamepad.axes[i])
-                axisValueElements[i].textContent = axisValGamepad
-                let percentage = Math.round((gamepad.axes[i] + 1) * (100 / 2))
-                barElements[i].style.background = `linear-gradient(to right, var(--alf-green) ${percentage}%, grey 0%)`;
-                axisArray[i] = axisValGamepad
-            }
-        } else {
-            axisArray = [127, 127, 127, 127]
-        }
-        return { axis0: axisArray[0], axis1: axisArray[1], axis2: axisArray[2], axis3: axisArray[3] };
-    }
-
-    function getButtonBytes() {
-        const gamepad = getFirstGamepad();
-        let buttonStates = manualButtonStates;
-
-        if (gamepad) {
-            const buttonCount = Math.min(gamepad.buttons.length, 16);
-            for (let i = 0; i < buttonCount; i++) {
-                if (gamepad.buttons[i]?.pressed) buttonStates |= (1 << i);
-            }
-        }
-
-        for (let i = 0; i < buttonElements.length; i++) {
-            const isActive = !!(buttonStates & (1 << i));
-            const newColor = isActive ? 'var(--alf-green)' : 'grey';
-            if (buttonElements[i].style.background !== newColor) {
-                buttonElements[i].style.background = newColor;
-            }
-        }
-
-        return { byte0: buttonStates & 0xFF, byte1: (buttonStates >> 8) & 0xFF };
-    }
-
-    return { getAxes: getGamepadAxes, getButtons: getButtonBytes, setIndex, handleDisconnect, getSelectedGamepad }
+    return { setIndex, handleDisconnect, getSelectedGamepad };
 }
 
 // -------------------------------------------- keyboard --------------------------------------- //

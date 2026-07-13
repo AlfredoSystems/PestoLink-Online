@@ -16,6 +16,7 @@
     --bg-slider-bar:        rgb(141, 168, 204);
     --modal-divider:        #555;
     --list-item-hover:      #777;
+    --card-label:           white;
 }
 
 html[data-theme="dark"] {
@@ -30,6 +31,7 @@ html[data-theme="dark"] {
     --bg-slider-bar:    #3a5a7a;
     --modal-divider:    #555;
     --list-item-hover:  #4a4a4a;
+    --card-label:       #7a7a7a;
 }
 
 /* ---- reset & base ---- */
@@ -84,20 +86,11 @@ body {
     border-radius: 2vw;
 }
 
-#mobile-button,
-#mobile-joystick,
-#desktop-axis,
-#desktop-button {
+#left-panel,
+#right-panel {
     width: 30vw;
     height: 30vw;
 }
-
-.mobile-only { display: none; }
-.desktop-only { display: grid; }
-.desktop-only#gamepad-select-button { display: block; }
-
-body.mobile-mode .mobile-only { display: grid; }
-body.mobile-mode .desktop-only { display: none; }
 
 /* ---- floating buttons ---- */
 
@@ -244,14 +237,45 @@ body.terminal-visible #toggle-terminal .toggle-nub {
     transform: translateX(2vw);
 }
 
-/* ---- mobile input ---- */
+/* ---- mobile input cards ---- */
 
-#mobile-joystick {
+.card {
+    display: grid;
+    box-sizing: border-box;
+    width: 100%;
+    height: 100%;
+}
+
+.joystick-card {
+    position: relative;
+    display: flex;
     justify-content: center;
     align-items: center;
 }
 
-#joystick-background {
+.card-label {
+    position: absolute;
+    text-align: center;
+    font-size: 2vw;
+    color: var(--card-label);
+}
+
+/* Horizontal axis legend below the joystick: negative left, positive right. */
+.joystick-label-x {
+    bottom: 1.5vw;
+    left: 0;
+    width: 100%;
+}
+
+/* Vertical axis legend beside the joystick: negative up, positive down. */
+.joystick-label-y {
+    left: 1.5vw;
+    top: 0;
+    height: 100%;
+    writing-mode: vertical-rl;
+}
+
+.joystick-background {
     border-radius: 1vw;
     background: var(--bg-joystick);
     display: flex;
@@ -267,33 +291,118 @@ body.terminal-visible #toggle-terminal .toggle-nub {
     cursor: pointer;
     height: 13vw;
     width: 13vw;
+    touch-action: none;
 }
 
-#mobile-button {
+.buttons-card,
+.dpad-card {
     grid-template-columns: repeat(3, 1fr);
     grid-template-rows: repeat(3, 1fr);
     padding: 2vw;
 }
 
-#button-3 { grid-column: 2; grid-row: 1; }
-#button-2 { grid-column: 1; grid-row: 2; }
-#button-1 { grid-column: 3; grid-row: 2; }
-#button-0 { grid-column: 2; grid-row: 3; }
+.pos-top    { grid-column: 2; grid-row: 1; }
+.pos-left   { grid-column: 1; grid-row: 2; }
+.pos-right  { grid-column: 3; grid-row: 2; }
+.pos-bottom { grid-column: 2; grid-row: 3; }
 
-#mobile-button button {
+.buttons-card button,
+.dpad-card button {
     font-size: 5vw;
     background-color: var(--bg-settings);
-    transform: scale(1.3);
-    border-radius: 100%;
     cursor: pointer;
     display: flex;
     justify-content: center;
     align-items: center;
+    touch-action: none;
 }
 
-/* ---- desktop input ---- */
+.buttons-card button {
+    transform: scale(1.3);
+    border-radius: 100%;
+}
 
-#desktop-axis {
+.dpad-card button {
+    font-size: 4vw;
+    border-radius: 1vw;
+    flex-direction: column;
+    line-height: 1;
+    gap: 0.5vw;
+}
+
+.dpad-card .pos-left,
+.dpad-card .pos-right {
+    flex-direction: row;
+}
+
+.dpad-num {
+    font-size: 1.5vw;
+}
+
+.buttons-card button.pressed,
+.dpad-card button.pressed,
+.gamepad-buttons-card button.pressed {
+    background-color: var(--alf-green);
+}
+
+.sliders-card {
+    grid-template-columns: repeat(4, 1fr);
+    grid-gap: 2vw;
+    padding: 2vw;
+}
+
+.slider-column {
+    display: flex;
+    flex-direction: column;
+    gap: 1vw;
+    min-height: 0;
+}
+
+.slider-track {
+    position: relative;
+    flex: 1;
+    background: var(--bg-joystick);
+    border-radius: 1vw;
+    cursor: pointer;
+    touch-action: none;
+}
+
+.slider-value {
+    background-color: var(--bg-settings);
+    border-radius: 1vw;
+    padding: 0.5vw 0;
+    font-size: 2vw;
+    text-align: center;
+}
+
+.slider-center {
+    position: absolute;
+    top: 50%;
+    left: 10%;
+    width: 80%;
+    height: 2px;
+    background: grey;
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+.slider-thumb {
+    position: absolute;
+    left: 0;
+    width: 100%;
+    height: 15%;
+    background: grey;
+    border-radius: 1vw;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 2vw;
+    pointer-events: none;
+}
+
+/* ---- gamepad display cards ---- */
+
+.gamepad-axes-card {
     padding: 1vw;
     grid-row-gap: 1vw;
     grid-column-gap: 0.5vw;
@@ -301,9 +410,8 @@ body.terminal-visible #toggle-terminal .toggle-nub {
     grid-template-columns: 1fr 1fr 1fr;
 }
 
-#desktop-axis div {
+.gamepad-axes-card div {
     font-size: 2vw;
-    border: none;
 }
 
 .slider-non {
@@ -320,18 +428,19 @@ body.terminal-visible #toggle-terminal .toggle-nub {
     background: var(--bg-slider-bar);
 }
 
-#desktop-button {
+.gamepad-buttons-card {
     padding: 1vw;
     grid-gap: 0.5vw;
     grid-template-rows: 1fr 1fr 1fr 1fr;
     grid-template-columns: 1fr 1fr 1fr 1fr;
 }
 
-#desktop-button button {
+.gamepad-buttons-card button {
     font-size: 2vw;
-    background: var(--bg-settings);
-    border: none;
+    background-color: var(--bg-settings);
     border-radius: 1vw;
+    cursor: pointer;
+    touch-action: none;
 }
 
 /* ---- terminal ---- */
@@ -584,6 +693,14 @@ body.terminal-visible #hack-spacer { display: none; }
     font-size: 12px;
     color: white;
     padding-top: 4px;
+}
+
+.card-select {
+    background-color: var(--bg-button);
+    border-radius: 8px;
+    padding: 6px 10px;
+    font-size: 14px;
+    cursor: pointer;
 }
 
 .theme-slider {
