@@ -69,10 +69,10 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('app-version').textContent = 'build ' + (import.meta.env.VITE_BUILD_NUMBER ?? 'dev');
     setupSettings();
     setupCardSelectors();
-    window.setInterval(renderLoop, 50);
+    window.setInterval(renderLoop, 100);
 
     // Repaint cards every animation frame so state changes on one card show
-    // up on the others without waiting for the 20 Hz packet loop.
+    // up on the others without waiting for the 10 Hz packet loop.
     (function displayLoop() {
         cardPanels.getFrame();
         requestAnimationFrame(displayLoop);
@@ -669,12 +669,8 @@ function createBleAgent(getGamepad) {
         connectBLE();
     }
 
-    // Skip a tick rather than overlap GATT writes if the radio can't keep up.
-    let sendInProgress = false;
-
     async function sendPacketBLE(byteArray) {
-        if (!isConnectedBLE || sendInProgress) return;
-        sendInProgress = true;
+        if (!isConnectedBLE) return;
         try {
             if (bleMode === 'native') {
                 await nativeBleClient.writeWithoutResponse(
@@ -688,8 +684,6 @@ function createBleAgent(getGamepad) {
             }
         } catch (error) {
             console.error('Error:', error);
-        } finally {
-            sendInProgress = false;
         }
     }
 
